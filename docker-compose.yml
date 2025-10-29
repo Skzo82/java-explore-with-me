@@ -23,4 +23,4 @@ services:
       - "9090:9090"
 
 volumes:
-  pg-stats-data: {}
+  pg-stats-data: { }

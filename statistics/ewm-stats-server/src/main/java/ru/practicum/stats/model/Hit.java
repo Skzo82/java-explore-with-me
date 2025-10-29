@@ -1,6 +1,7 @@
 package ru.practicum.stats.model;
 
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 
 @Entity

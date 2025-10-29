@@ -12,7 +12,8 @@ import java.time.format.DateTimeFormatter;
 public class GlobalExceptionHandler {
 
     // простой ответ об ошибке для автотестов
-    record ErrorResponse(String status, String reason, String message, String timestamp) {}
+    record ErrorResponse(String status, String reason, String message, String timestamp) {
+    }
 
     private static final DateTimeFormatter F = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 

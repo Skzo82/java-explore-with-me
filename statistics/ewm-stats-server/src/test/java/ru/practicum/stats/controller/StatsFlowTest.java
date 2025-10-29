@@ -32,7 +32,7 @@ class StatsFlowTest {
     void postThenQueryStats_returnsHits() throws Exception {
         // записываем несколько хитов
         for (int i = 0; i < 3; i++) {
-            var dto = new EndpointHitDto(null,"ewm-main-service","/events/42","127.0.0." + i,"2025-10-27 12:0" + i + ":00");
+            var dto = new EndpointHitDto(null, "ewm-main-service", "/events/42", "127.0.0." + i, "2025-10-27 12:0" + i + ":00");
             mvc.perform(post("/hit")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(om.writeValueAsString(dto)))
@@ -48,7 +48,8 @@ class StatsFlowTest {
                 .andReturn();
 
         var body = res.getResponse().getContentAsString();
-        List<ViewStatsDto> stats = om.readValue(body, new TypeReference<>(){});
+        List<ViewStatsDto> stats = om.readValue(body, new TypeReference<>() {
+        });
 
         // проверяем, что есть запись для /events/42
         assertThat(stats).anySatisfy(v -> assertThat(v.uri()).isEqualTo("/events/42"));

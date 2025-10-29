@@ -1,6 +1,7 @@
 # ExploreWithMe — Этап 1: Сервис статистики
 
 Этот репозиторий содержит реализацию **сервиса статистики** и **HTTP-клиента**, согласно спецификации:
+
 - `ewm-stats-service-spec.json`
 - Порт сервиса: **9090**
 
@@ -56,9 +57,11 @@ curl.exe http://localhost:9090/actuator/health
 ## Основные эндпоинты
 
 ### **POST** `/hit`
+
 Сохраняет информацию о запросе пользователя.
 
 Пример запроса:
+
 ```json
 {
   "app": "ewm-main-service",
@@ -69,6 +72,7 @@ curl.exe http://localhost:9090/actuator/health
 ```
 
 Ответ:
+
 ```
 201 Created
 ```
@@ -76,9 +80,11 @@ curl.exe http://localhost:9090/actuator/health
 ---
 
 ### **GET** `/stats`
+
 Возвращает агрегированную статистику.
 
 Параметры запроса:
+
 ```
 start=2025-10-27 00:00:00
 end=2025-10-27 23:59:59
@@ -87,14 +93,20 @@ unique=true|false (по умолчанию false)
 ```
 
 Пример:
+
 ```bash
 curl "http://localhost:9090/stats?start=2025-10-27%2000:00:00&end=2025-10-27%2023:59:59&unique=true"
 ```
 
 Пример ответа:
+
 ```json
 [
-  { "app": "ewm-main-service", "uri": "/events/1", "hits": 3 }
+  {
+    "app": "ewm-main-service",
+    "uri": "/events/1",
+    "hits": 3
+  }
 ]
 ```
 
@@ -116,6 +128,7 @@ server:
 ```
 
 Запуск из IntelliJ IDEA или командой:
+
 ```bash
 mvn spring-boot:run -pl statistics/ewm-stats-server
 ```

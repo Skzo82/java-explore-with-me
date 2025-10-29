@@ -13,8 +13,13 @@
         "header": [],
         "url": {
           "raw": "{{baseUrl}}/actuator/health",
-          "host": ["{{baseUrl}}"],
-          "path": ["actuator", "health"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "actuator",
+            "health"
+          ]
         }
       },
       "event": [
@@ -70,7 +75,10 @@
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Content-Type", "value": "application/json" }
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
         ],
         "body": {
           "mode": "raw",
@@ -78,8 +86,12 @@
         },
         "url": {
           "raw": "{{baseUrl}}/hit",
-          "host": ["{{baseUrl}}"],
-          "path": ["hit"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "hit"
+          ]
         }
       }
     },
@@ -122,12 +134,25 @@
         "header": [],
         "url": {
           "raw": "{{baseUrl}}/stats?start={{start}}&end={{end}}&unique=false",
-          "host": ["{{baseUrl}}"],
-          "path": ["stats"],
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "stats"
+          ],
           "query": [
-            { "key": "start", "value": "{{start}}" },
-            { "key": "end", "value": "{{end}}" },
-            { "key": "unique", "value": "false" }
+            {
+              "key": "start",
+              "value": "{{start}}"
+            },
+            {
+              "key": "end",
+              "value": "{{end}}"
+            },
+            {
+              "key": "unique",
+              "value": "false"
+            }
           ]
         }
       }
@@ -163,26 +188,66 @@
         "header": [],
         "url": {
           "raw": "{{baseUrl}}/stats?start={{start}}&end={{end}}&uris={{uris}}&unique=true",
-          "host": ["{{baseUrl}}"],
-          "path": ["stats"],
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "stats"
+          ],
           "query": [
-            { "key": "start", "value": "{{start}}" },
-            { "key": "end", "value": "{{end}}" },
-            { "key": "uris", "value": "{{uris}}" },
-            { "key": "unique", "value": "true" }
+            {
+              "key": "start",
+              "value": "{{start}}"
+            },
+            {
+              "key": "end",
+              "value": "{{end}}"
+            },
+            {
+              "key": "uris",
+              "value": "{{uris}}"
+            },
+            {
+              "key": "unique",
+              "value": "true"
+            }
           ]
         }
       }
     }
   ],
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:9090" },
-    { "key": "appName", "value": "ewm-main-service" },
-    { "key": "testUri", "value": "/events/1" },
-    { "key": "clientIp", "value": "192.168.0.1" },
-    { "key": "hitTimestamp", "value": "" },
-    { "key": "start", "value": "" },
-    { "key": "end", "value": "" },
-    { "key": "uris", "value": "" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:9090"
+    },
+    {
+      "key": "appName",
+      "value": "ewm-main-service"
+    },
+    {
+      "key": "testUri",
+      "value": "/events/1"
+    },
+    {
+      "key": "clientIp",
+      "value": "192.168.0.1"
+    },
+    {
+      "key": "hitTimestamp",
+      "value": ""
+    },
+    {
+      "key": "start",
+      "value": ""
+    },
+    {
+      "key": "end",
+      "value": ""
+    },
+    {
+      "key": "uris",
+      "value": ""
+    }
   ]
 }
