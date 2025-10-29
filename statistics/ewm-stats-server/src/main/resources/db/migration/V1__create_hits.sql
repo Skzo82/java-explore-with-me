@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS hits (
+  id BIGSERIAL PRIMARY KEY,
+  app VARCHAR(255) NOT NULL,
+  uri VARCHAR(1024) NOT NULL,
+  ip  VARCHAR(45)   NOT NULL,
+  ts  TIMESTAMP     NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS hits_ts_idx  ON hits (ts);
+CREATE INDEX IF NOT EXISTS hits_uri_idx ON hits (uri);
+CREATE INDEX IF NOT EXISTS hits_ip_idx  ON hits (ip);

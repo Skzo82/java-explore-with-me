@@ -1,0 +1,188 @@
+{
+  "info": {
+    "name": "ExploreWithMe — Stats Service",
+    "_postman_id": "4c8c3c7e-7c2a-4f69-93c7-eee000statsloc",
+    "description": "Коллекция для локального тестирования ewm-stats-server (http://localhost:9090)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GET /actuator/health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/actuator/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["actuator", "health"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Проверяем, что сервис отвечает кодом 200 и статусом UP",
+              "pm.test(\"Код состояния = 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Сервис находится в состоянии UP\", function () {",
+              "  var b = pm.response.json();",
+              "  pm.expect(b).to.have.property('status', 'UP');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /hit",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Устанавливаем текущее время в формате 'yyyy-MM-dd HH:mm:ss'",
+              "function pad(n){return n<10?'0'+n:n;}",
+              "function fmt(d){",
+              "  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());",
+              "}",
+              "pm.environment.set('hitTimestamp', fmt(new Date()));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Проверяем, что запрос создал запись (код 201)",
+              "pm.test(\"Создано (код 201)\", function () {",
+              "  pm.response.to.have.status(201);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"app\": \"{{appName}}\",\n  \"uri\": \"{{testUri}}\",\n  \"ip\": \"{{clientIp}}\",\n  \"timestamp\": \"{{hitTimestamp}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/hit",
+          "host": ["{{baseUrl}}"],
+          "path": ["hit"]
+        }
+      }
+    },
+    {
+      "name": "GET /stats (все)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Устанавливаем диапазон времени: вчера → завтра",
+              "function pad(n){return n<10?'0'+n:n;}",
+              "function fmt(d){",
+              "  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());",
+              "}",
+              "const now = new Date();",
+              "const start = new Date(now.getTime() - 24*60*60*1000);",
+              "const end = new Date(now.getTime() + 24*60*60*1000);",
+              "pm.environment.set('start', fmt(start));",
+              "pm.environment.set('end', fmt(end));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Проверяем, что ответ содержит код 200",
+              "pm.test(\"Код состояния = 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/stats?start={{start}}&end={{end}}&unique=false",
+          "host": ["{{baseUrl}}"],
+          "path": ["stats"],
+          "query": [
+            { "key": "start", "value": "{{start}}" },
+            { "key": "end", "value": "{{end}}" },
+            { "key": "unique", "value": "false" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "GET /stats (фильтр + уникальные)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Используем те же start/end и задаем фильтр по URI",
+              "pm.environment.set('uris', pm.environment.get('testUri'));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Проверяем код состояния 200",
+              "pm.test(\"Код состояния = 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/stats?start={{start}}&end={{end}}&uris={{uris}}&unique=true",
+          "host": ["{{baseUrl}}"],
+          "path": ["stats"],
+          "query": [
+            { "key": "start", "value": "{{start}}" },
+            { "key": "end", "value": "{{end}}" },
+            { "key": "uris", "value": "{{uris}}" },
+            { "key": "unique", "value": "true" }
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:9090" },
+    { "key": "appName", "value": "ewm-main-service" },
+    { "key": "testUri", "value": "/events/1" },
+    { "key": "clientIp", "value": "192.168.0.1" },
+    { "key": "hitTimestamp", "value": "" },
+    { "key": "start", "value": "" },
+    { "key": "end", "value": "" },
+    { "key": "uris", "value": "" }
+  ]
+}

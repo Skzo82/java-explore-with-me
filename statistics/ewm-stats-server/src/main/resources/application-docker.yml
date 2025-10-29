@@ -1,0 +1,7 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://stats-db:5432/ewm_stats
+    username: ewm
+    password: ewm
+server:
+  port: 9090
