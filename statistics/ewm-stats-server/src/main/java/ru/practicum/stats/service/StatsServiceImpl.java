@@ -17,15 +17,14 @@ public class StatsServiceImpl implements StatsService {
 
     private final HitRepository repo;
 
-    // 👇 Добавляем явный конструктор для Spring
     @Autowired
     public StatsServiceImpl(HitRepository repo) {
         this.repo = repo;
     }
 
+    // Сохранение хита (DTO → сущность)
     @Override
     public void save(EndpointHitDto dto) {
-        // маппинг DTO -> сущность
         Hit h = new Hit();
         h.setApp(dto.app());
         h.setUri(dto.uri());
@@ -54,6 +53,7 @@ public class StatsServiceImpl implements StatsService {
         repo.save(h);
     }
 
+    // Получение статистики по параметрам
     @Override
     public List<ViewStatsDto> stats(LocalDateTime start,
                                     LocalDateTime end,
@@ -62,12 +62,17 @@ public class StatsServiceImpl implements StatsService {
         if (start.isAfter(end)) {
             throw new IllegalArgumentException("start must be before end");
         }
-        return unique
-                ? repo.aggregateUnique(start, end, emptyToNull(uris))
-                : repo.aggregateAll(start, end, emptyToNull(uris));
-    }
 
-    private static List<String> emptyToNull(List<String> uris) {
-        return (uris == null || uris.isEmpty()) ? null : uris;
+        // если список URI передан
+        if (uris != null && !uris.isEmpty()) {
+            return unique
+                    ? repo.aggregateUniqueByUris(start, end, uris)
+                    : repo.aggregateAllByUris(start, end, uris);
+        }
+
+        // без фильтра по URI
+        return unique
+                ? repo.aggregateUnique(start, end)
+                : repo.aggregateAll(start, end);
     }
 }
