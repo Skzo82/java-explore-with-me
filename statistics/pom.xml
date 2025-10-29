@@ -15,6 +15,5 @@
     <modules>
         <module>ewm-stats-dto</module>
         <module>ewm-stats-server</module>
-        <module>ewm-stats-client</module>
     </modules>
 </project>
