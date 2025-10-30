@@ -1,6 +1,6 @@
 package ru.practicum.stats.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.stats.dto.EndpointHitDto;
@@ -16,8 +16,6 @@ public class StatsController {
 
     private final StatsService service;
 
-    // Конструктор с @Autowired решает проблему инициализации
-    @Autowired
     public StatsController(StatsService service) {
         this.service = service;
     }
@@ -29,10 +27,24 @@ public class StatsController {
     }
 
     @GetMapping("/stats")
-    public List<ViewStatsDto> stats(@RequestParam LocalDateTime start,
-                                    @RequestParam LocalDateTime end,
-                                    @RequestParam(required = false) List<String> uris,
-                                    @RequestParam(defaultValue = "false") boolean unique) {
+    public List<ViewStatsDto> stats(
+            @RequestParam("start")
+            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+            LocalDateTime start,
+
+            @RequestParam("end")
+            @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+            LocalDateTime end,
+
+            @RequestParam(value = "uris", required = false)
+            List<String> uris,
+
+            @RequestParam(value = "unique", defaultValue = "false")
+            boolean unique
+    ) {
+        if (start.isAfter(end)) {
+            throw new IllegalArgumentException("start must be before end");
+        }
         return service.stats(start, end, uris, unique);
     }
 }

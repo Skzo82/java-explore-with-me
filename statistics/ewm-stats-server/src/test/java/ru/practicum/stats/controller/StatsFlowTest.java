@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.stats.dto.EndpointHitDto;
 import ru.practicum.stats.dto.ViewStatsDto;
@@ -18,28 +19,28 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/* Интеграционный тест на профиле test (H2, без Flyway) */
+@ActiveProfiles("test")
 @SpringBootTest
 @AutoConfigureMockMvc
 class StatsFlowTest {
 
     @Autowired
     MockMvc mvc;
-
     @Autowired
     ObjectMapper om;
 
     @Test
     void postThenQueryStats_returnsHits() throws Exception {
-        // записываем несколько хитов
         for (int i = 0; i < 3; i++) {
-            var dto = new EndpointHitDto(null, "ewm-main-service", "/events/42", "127.0.0." + i, "2025-10-27 12:0" + i + ":00");
+            var dto = new EndpointHitDto(null, "ewm-main-service", "/events/42",
+                    "127.0.0." + i, "2025-10-27 12:0" + i + ":00");
             mvc.perform(post("/hit")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(om.writeValueAsString(dto)))
                     .andExpect(status().isCreated());
         }
 
-        // запрашиваем статистику
         var res = mvc.perform(get("/stats")
                         .param("start", "2025-10-27 00:00:00")
                         .param("end", "2025-10-27 23:59:59")
@@ -51,7 +52,6 @@ class StatsFlowTest {
         List<ViewStatsDto> stats = om.readValue(body, new TypeReference<>() {
         });
 
-        // проверяем, что есть запись для /events/42
         assertThat(stats).anySatisfy(v -> assertThat(v.uri()).isEqualTo("/events/42"));
     }
 }

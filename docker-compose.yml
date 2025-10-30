@@ -1,26 +1,40 @@
+version: "3.9"
+
 services:
   stats-db:
     image: postgres:15.4
+    container_name: stats-db
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ewm_stats
       POSTGRES_USER: ewm
       POSTGRES_PASSWORD: ewm
     ports:
-      - "5433:5432"
+      - "5433:5432" # host:container -> localhost:5433 in local
     volumes:
       - pg-stats-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ewm -d ewm_stats" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   stats-server:
-    build: ./statistics/ewm-stats-server
+    build:
+      context: ./statistics/ewm-stats-server
+    container_name: stats-server
     depends_on:
-      - stats-db
+      stats-db:
+        condition: service_healthy
     environment:
+      SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_URL: jdbc:postgresql://stats-db:5432/ewm_stats
       SPRING_DATASOURCE_USERNAME: ewm
       SPRING_DATASOURCE_PASSWORD: ewm
-      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: "9090"
     ports:
-      - "9090:9090"
+      - "9090:9090" # access on http://localhost:9090
+    restart: unless-stopped
 
 volumes:
   pg-stats-data: { }
