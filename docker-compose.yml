@@ -8,20 +8,18 @@ services:
       POSTGRES_USER: ewm
       POSTGRES_PASSWORD: ewm
     ports:
-      - "5433:5432"
+      - "5433:5432"        # host 5433 -> container 5432
     volumes:
       - pg-stats-data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ewm -d ewm_stats" ]
+      test: ["CMD-SHELL", "pg_isready -U ewm -d ewm_stats"]
       interval: 5s
       timeout: 3s
-      retries: 30
+      retries: 20
 
-  stats-server:
+  ewm-service:
     build:
-      context: .
-      dockerfile: statistics/ewm-stats-server/Dockerfile
-    container_name: ewm-service
+      context: ./statistics/ewm-stats-server
     depends_on:
       stats-db:
         condition: service_healthy
@@ -36,4 +34,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  pg-stats-data: { }
+  pg-stats-data: {}

@@ -1,19 +1,12 @@
-# ===== Build stage =====
-FROM maven:3.9.8-eclipse-temurin-21 AS build
-WORKDIR /workspace
+FROM maven:3.9.9-eclipse-temurin-21 AS build
+WORKDIR /work
+COPY ../../pom.xml ./pom.xml
+COPY ../.. ./
+RUN mvn -q -DskipTests -pl statistics/ewm-stats-dto,statistics/ewm-stats-server -am clean package
 
-COPY pom.xml .
-COPY statistics/ewm-stats-dto/pom.xml statistics/ewm-stats-dto/
-COPY statistics/ewm-stats-server/pom.xml statistics/ewm-stats-server/
-
-RUN mvn -B -q -DskipTests -pl statistics/ewm-stats-server -am dependency:go-offline
-
-COPY . .
-RUN mvn -B -q -DskipTests -pl statistics/ewm-stats-server -am package
-
-# ===== Runtime stage =====
+# Run stage
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=build /workspace/statistics/ewm-stats-server/target/ewm-stats-server-*.jar /app/app.jar
+COPY --from=build /work/statistics/ewm-stats-server/target/*-SNAPSHOT.jar /app/app.jar
 EXPOSE 9090
 ENTRYPOINT ["java","-jar","/app/app.jar"]

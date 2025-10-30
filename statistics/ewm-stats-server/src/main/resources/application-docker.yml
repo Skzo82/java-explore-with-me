@@ -1,15 +1,7 @@
-server:
-  port: 9090
-
 spring:
   datasource:
     url: jdbc:postgresql://stats-db:5432/ewm_stats
     username: ewm
     password: ewm
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    open-in-view: false
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
+server:
+  port: 9090
