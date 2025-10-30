@@ -12,12 +12,12 @@ services:
     volumes:
       - pg-stats-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ewm -d ewm_stats"]
+      test: [ "CMD-SHELL", "pg_isready -U ewm -d ewm_stats" ]
       interval: 5s
       timeout: 3s
       retries: 30
 
-  ewm-service:                      
+  stats-server:
     build:
       context: .
       dockerfile: statistics/ewm-stats-server/Dockerfile
@@ -36,4 +36,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  pg-stats-data: {}
+  pg-stats-data: { }
