@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   stats-db:
     image: postgres:15.4
@@ -10,18 +8,19 @@ services:
       POSTGRES_USER: ewm
       POSTGRES_PASSWORD: ewm
     ports:
-      - "5433:5432" # host:container -> localhost:5433 in local
+      - "5433:5432"
     volumes:
       - pg-stats-data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ewm -d ewm_stats" ]
       interval: 5s
       timeout: 3s
-      retries: 20
+      retries: 30
 
   stats-server:
     build:
-      context: ./statistics/ewm-stats-server
+      context: .
+      dockerfile: statistics/ewm-stats-server/Dockerfile
     container_name: stats-server
     depends_on:
       stats-db:
@@ -33,8 +32,14 @@ services:
       SPRING_DATASOURCE_PASSWORD: ewm
       SERVER_PORT: "9090"
     ports:
-      - "9090:9090" # access on http://localhost:9090
+      - "9090:9090"
     restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:9090/actuator/health | grep -q UP || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
 
 volumes:
   pg-stats-data: { }
