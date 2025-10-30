@@ -12,16 +12,16 @@ services:
     volumes:
       - pg-stats-data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ewm -d ewm_stats" ]
+      test: ["CMD-SHELL", "pg_isready -U ewm -d ewm_stats"]
       interval: 5s
       timeout: 3s
       retries: 30
 
-  stats-server:
+  ewm-service:                      
     build:
       context: .
       dockerfile: statistics/ewm-stats-server/Dockerfile
-    container_name: stats-server
+    container_name: ewm-service
     depends_on:
       stats-db:
         condition: service_healthy
@@ -34,12 +34,6 @@ services:
     ports:
       - "9090:9090"
     restart: unless-stopped
-    healthcheck:
-      test: [ "CMD-SHELL", "wget -qO- http://localhost:9090/actuator/health | grep -q UP || exit 1" ]
-      interval: 5s
-      timeout: 3s
-      retries: 30
-      start_period: 20s
 
 volumes:
-  pg-stats-data: { }
+  pg-stats-data: {}
