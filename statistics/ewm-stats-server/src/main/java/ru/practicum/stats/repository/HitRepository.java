@@ -3,83 +3,55 @@ package ru.practicum.stats.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 import ru.practicum.stats.dto.ViewStatsDto;
 import ru.practicum.stats.model.Hit;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Repository
 public interface HitRepository extends JpaRepository<Hit, Long> {
 
     @Query("""
-            SELECT new ru.practicum.stats.dto.ViewStatsDto(h.app, h.uri, COUNT(h))
-            FROM Hit h
-            WHERE h.timestamp BETWEEN :start AND :end
-            GROUP BY h.app, h.uri
-            ORDER BY COUNT(h) DESC
+            select new ru.practicum.stats.dto.ViewStatsDto(h.app, h.uri, count(h.id))
+            from Hit h
+            where h.timestamp between :start and :end
+            group by h.app, h.uri
+            order by count(h.id) desc
             """)
-    List<ViewStatsDto> aggregateAll(
-            @Param("start") LocalDateTime start,
-            @Param("end") LocalDateTime end
-    );
+    List<ViewStatsDto> aggregateAll(@Param("start") LocalDateTime start,
+                                    @Param("end") LocalDateTime end);
 
     @Query("""
-            SELECT new ru.practicum.stats.dto.ViewStatsDto(h.app, h.uri, COUNT(DISTINCT h.ip))
-            FROM Hit h
-            WHERE h.timestamp BETWEEN :start AND :end
-            GROUP BY h.app, h.uri
-            ORDER BY COUNT(DISTINCT h.ip) DESC
+            select new ru.practicum.stats.dto.ViewStatsDto(h.app, h.uri, count(h.id))
+            from Hit h
+            where h.timestamp between :start and :end
+              and h.uri in :uris
+            group by h.app, h.uri
+            order by count(h.id) desc
             """)
-    List<ViewStatsDto> aggregateUnique(
-            @Param("start") LocalDateTime start,
-            @Param("end") LocalDateTime end
-    );
+    List<ViewStatsDto> aggregateAllByUris(@Param("start") LocalDateTime start,
+                                          @Param("end") LocalDateTime end,
+                                          @Param("uris") List<String> uris);
 
     @Query("""
-            SELECT new ru.practicum.stats.dto.ViewStatsDto(h.app, h.uri, COUNT(h))
-            FROM Hit h
-            WHERE h.timestamp BETWEEN :start AND :end
-              AND h.uri IN :uris
-            GROUP BY h.app, h.uri
-            ORDER BY COUNT(h) DESC
+            select new ru.practicum.stats.dto.ViewStatsDto(h.app, h.uri, count(distinct h.ip))
+            from Hit h
+            where h.timestamp between :start and :end
+            group by h.app, h.uri
+            order by count(distinct h.ip) desc
             """)
-    List<ViewStatsDto> aggregateAllByUris(
-            @Param("start") LocalDateTime start,
-            @Param("end") LocalDateTime end,
-            @Param("uris") List<String> uris
-    );
+    List<ViewStatsDto> aggregateUnique(@Param("start") LocalDateTime start,
+                                       @Param("end") LocalDateTime end);
 
     @Query("""
-            SELECT new ru.practicum.stats.dto.ViewStatsDto(h.app, h.uri, COUNT(DISTINCT h.ip))
-            FROM Hit h
-            WHERE h.timestamp BETWEEN :start AND :end
-              AND h.uri IN :uris
-            GROUP BY h.app, h.uri
-            ORDER BY COUNT(DISTINCT h.ip) DESC
+            select new ru.practicum.stats.dto.ViewStatsDto(h.app, h.uri, count(distinct h.ip))
+            from Hit h
+            where h.timestamp between :start and :end
+              and h.uri in :uris
+            group by h.app, h.uri
+            order by count(distinct h.ip) desc
             """)
-    List<ViewStatsDto> aggregateUniqueByUris(
-            @Param("start") LocalDateTime start,
-            @Param("end") LocalDateTime end,
-            @Param("uris") List<String> uris
-    );
-
-    default List<ViewStatsDto> aggregateAll(LocalDateTime start,
-                                            LocalDateTime end,
-                                            List<String> uris) {
-        if (uris == null || uris.isEmpty()) {
-            return aggregateAll(start, end);
-        }
-        return aggregateAllByUris(start, end, uris);
-    }
-
-    default List<ViewStatsDto> aggregateUnique(LocalDateTime start,
-                                               LocalDateTime end,
-                                               List<String> uris) {
-        if (uris == null || uris.isEmpty()) {
-            return aggregateUnique(start, end);
-        }
-        return aggregateUniqueByUris(start, end, uris);
-    }
+    List<ViewStatsDto> aggregateUniqueByUris(@Param("start") LocalDateTime start,
+                                             @Param("end") LocalDateTime end,
+                                             @Param("uris") List<String> uris);
 }

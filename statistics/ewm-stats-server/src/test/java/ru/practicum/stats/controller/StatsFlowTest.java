@@ -19,16 +19,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/* Интеграционный тест на профиле test (H2, без Flyway) */
 @ActiveProfiles("test")
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 class StatsFlowTest {
 
-    @Autowired
-    MockMvc mvc;
-    @Autowired
-    ObjectMapper om;
+    @Autowired MockMvc mvc;
+    @Autowired ObjectMapper om;
 
     @Test
     void postThenQueryStats_returnsHits() throws Exception {
@@ -49,8 +46,7 @@ class StatsFlowTest {
                 .andReturn();
 
         var body = res.getResponse().getContentAsString();
-        List<ViewStatsDto> stats = om.readValue(body, new TypeReference<>() {
-        });
+        List<ViewStatsDto> stats = om.readValue(body, new TypeReference<>(){});
 
         assertThat(stats).anySatisfy(v -> assertThat(v.uri()).isEqualTo("/events/42"));
     }

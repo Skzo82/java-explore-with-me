@@ -7,30 +7,66 @@ services:
       POSTGRES_DB: ewm_stats
       POSTGRES_USER: ewm
       POSTGRES_PASSWORD: ewm
-    ports: ["5433:5432"]
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg-stats-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL","pg_isready -U ewm -d ewm_stats"]
+      test: ["CMD-SHELL", "pg_isready -U ewm -d ewm_stats"]
       interval: 5s
       timeout: 3s
       retries: 20
-    volumes:
-      - pg-stats-data:/var/lib/postgresql/data
 
   stats-server:
     build:
-      context: .
-      dockerfile: statistics/ewm-stats-server/Dockerfile
+      context: ./statistics/ewm-stats-server
+    container_name: stats-server
     depends_on:
       stats-db:
         condition: service_healthy
     environment:
-      SPRING_PROFILES_ACTIVE: docker
       SPRING_DATASOURCE_URL: jdbc:postgresql://stats-db:5432/ewm_stats
       SPRING_DATASOURCE_USERNAME: ewm
       SPRING_DATASOURCE_PASSWORD: ewm
       SERVER_PORT: "9090"
-    ports: ["9090:9090"]
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  main-db:
+    image: postgres:15.4
+    container_name: main-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ewm_main
+      POSTGRES_USER: ewm
+      POSTGRES_PASSWORD: ewm
+    ports:
+      - "5434:5432"
+    volumes:
+      - pg-main-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ewm -d ewm_main"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  ewm-main-service:
+    build:
+      context: ./statistics/ewm-main-service
+    container_name: ewm-main-service
+    depends_on:
+      main-db:
+        condition: service_healthy
+      stats-server:
+        condition: service_started
+    environment:
+      SERVER_PORT: "8080"
+      STATS_URL: http://stats-server:9090
+    ports:
+      - "8080:8080"
     restart: unless-stopped
 
 volumes:
   pg-stats-data: {}
+  pg-main-data: {}

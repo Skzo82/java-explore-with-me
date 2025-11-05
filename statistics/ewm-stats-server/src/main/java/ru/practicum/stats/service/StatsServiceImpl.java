@@ -1,6 +1,5 @@
 package ru.practicum.stats.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.stats.dto.EndpointHitDto;
@@ -12,18 +11,15 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-/* Реализация сервиса статистики */
 @Service
 public class StatsServiceImpl implements StatsService {
 
     private final HitRepository repo;
 
-    @Autowired
     public StatsServiceImpl(HitRepository repo) {
         this.repo = repo;
     }
 
-    // набор форматов для парсинга timestamp из DTO
     private static final DateTimeFormatter[] TS_FORMATS = new DateTimeFormatter[]{
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
@@ -59,13 +55,10 @@ public class StatsServiceImpl implements StatsService {
         }
     }
 
-    // пытаемся распарсить timestamp несколькими форматами
     private static LocalDateTime parseTimestamp(String ts) {
         for (DateTimeFormatter f : TS_FORMATS) {
-            try {
-                return LocalDateTime.parse(ts, f);
-            } catch (Exception ignored) {
-            }
+            try { return LocalDateTime.parse(ts, f); }
+            catch (Exception ignored) {}
         }
         throw new IllegalArgumentException("Invalid timestamp format: " + ts);
     }

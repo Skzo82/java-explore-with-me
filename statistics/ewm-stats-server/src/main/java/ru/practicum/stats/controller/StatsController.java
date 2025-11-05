@@ -10,7 +10,6 @@ import ru.practicum.stats.service.StatsService;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/* REST-контроллер сервиса статистики */
 @RestController
 public class StatsController {
 
@@ -31,16 +30,11 @@ public class StatsController {
             @RequestParam("start")
             @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
             LocalDateTime start,
-
             @RequestParam("end")
             @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
             LocalDateTime end,
-
-            @RequestParam(value = "uris", required = false)
-            List<String> uris,
-
-            @RequestParam(value = "unique", defaultValue = "false")
-            boolean unique
+            @RequestParam(value = "uris", required = false) List<String> uris,
+            @RequestParam(value = "unique", defaultValue = "false") boolean unique
     ) {
         if (start.isAfter(end)) {
             throw new IllegalArgumentException("start must be before end");

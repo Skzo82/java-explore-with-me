@@ -6,7 +6,6 @@ import ru.practicum.stats.dto.ViewStatsDto;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/* Сервисный интерфейс статистики */
 public interface StatsService {
     void save(EndpointHitDto dto);
 

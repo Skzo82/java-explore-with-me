@@ -19,7 +19,6 @@ class HitRepositoryTest {
 
     @Test
     void aggregateAll_andUnique_countsOk() {
-        // подготавливаем данные
         repo.save(hit("app", "/a", "1.1.1.1", "2025-10-27T12:00:00"));
         repo.save(hit("app", "/a", "1.1.1.1", "2025-10-27T12:05:00"));
         repo.save(hit("app", "/a", "2.2.2.2", "2025-10-27T12:10:00"));
@@ -28,10 +27,9 @@ class HitRepositoryTest {
         var s = LocalDateTime.parse("2025-10-27T00:00:00");
         var e = LocalDateTime.parse("2025-10-27T23:59:59");
 
-        List<ViewStatsDto> all = repo.aggregateAll(s, e, null);
-        List<ViewStatsDto> unique = repo.aggregateUnique(s, e, null);
+        List<ViewStatsDto> all = repo.aggregateAll(s, e);
+        List<ViewStatsDto> unique = repo.aggregateUnique(s, e);
 
-        // проверяем суммы по /a
         var allForA = all.stream().filter(v -> "/a".equals(v.uri())).findFirst().orElseThrow();
         var uniqForA = unique.stream().filter(v -> "/a".equals(v.uri())).findFirst().orElseThrow();
 
