@@ -12,20 +12,8 @@
 
     <artifactId>ewm-stats-server</artifactId>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>3.3.4</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
-        <!-- modulo DTO -->
+        <!-- DTO -->
         <dependency>
             <groupId>ru.practicum</groupId>
             <artifactId>ewm-stats-dto</artifactId>
@@ -98,9 +86,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
                 <configuration>
-                    <release>${maven.compiler.target}</release>
+                    <!-- prende ${java.version} dal POM root -->
+                    <release>${java.version}</release>
                     <compilerArgs>
                         <arg>-parameters</arg>
                     </compilerArgs>

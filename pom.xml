@@ -22,7 +22,6 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
     </properties>
 
-    <!-- Tutte le versioni delle dipendenze Spring gestite qui -->
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -36,7 +35,6 @@
     </dependencyManagement>
 
     <build>
-        <!-- Versioni plugin centralizzate qui -->
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -44,25 +42,27 @@
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <version>${spring-boot.version}</version>
                 </plugin>
-
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.13.0</version>
-                    <configuration>
-                        <release>${java.version}</release>
-                        <compilerArgs>
-                            <arg>-parameters</arg>
-                        </compilerArgs>
-                    </configuration>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.2.5</version>
-                </plugin>
             </plugins>
         </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <release>${java.version}</release>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+        </plugins>
     </build>
 </project>
