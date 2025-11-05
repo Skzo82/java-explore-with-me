@@ -1,8 +1,9 @@
 server:
   port: 9090
+
 spring:
   datasource:
-    url: jdbc:postgresql://stats-db:5432/ewm_stats
+    url: jdbc:postgresql://db-stats:5432/ewm_stats
     username: ewm
     password: ewm
   jpa:
@@ -12,8 +13,12 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+
 management:
   endpoints:
     web:
       exposure:
         include: health,info
+  endpoint:
+    health:
+      show-details: always
