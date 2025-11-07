@@ -1,14 +1,51 @@
 services:
+  db-stats:
+    image: postgres:16
+    container_name: db-stats
+    environment:
+      POSTGRES_DB: ewm_stats
+      POSTGRES_USER: ewm
+      POSTGRES_PASSWORD: ewm
+    ports:
+      - "5543:5432"      # porta host libera
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "ewm", "-d", "ewm_stats"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - db-stats-data:/var/lib/postgresql/data
+
   stats-server:
+    build:
+      context: .
+      dockerfile: statistics/ewm-stats-server/Dockerfile
+    depends_on:
+      db-stats:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker  # usa application-docker.yml
     ports:
       - "9090:9090"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9090/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
 
-  stats-db:
-    image: postgres:16.1
+  # main-service:
+  #   build:
+  #     context: .
+  #     dockerfile: statistics/ewm-main-service/Dockerfile
+  #   depends_on:
+  #     stats-server:
+  #       condition: service_healthy
+  #   environment:
+  #     SERVER_PORT: 8080
+  #     STATS_BASE_URL: http://stats-server:9090
+  #   ports:
+  #     - "8080:8080"
 
-  ewm-service:
-    ports:
-      - "8080:8080"
-
-  ewm-db:
-    image: postgres:16.1
+volumes:
+  db-stats-data:
