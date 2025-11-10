@@ -1,6 +1,10 @@
 server:
   port: 8080
 
+spring:
+  application:
+    name: ewm-main-service
+
 management:
   endpoints:
     web:
@@ -9,3 +13,7 @@ management:
   endpoint:
     health:
       show-details: always
+
+app:
+  stats:
+    base-url: ${STATS_BASE_URL:http://localhost:9090}
