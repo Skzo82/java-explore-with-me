@@ -3,6 +3,7 @@ package ru.practicum.main.exception;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -10,9 +11,10 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class ApiError {
-    private final String message;     // # сообщение об ошибке
-    private final String reason;      // # причина
-    private final String status;      // # HTTP-статус как строка
-    private final LocalDateTime timestamp; // # время возникновения
+    private String message;
+    private String reason;
+    private String status;
+    private LocalDateTime timestamp;
 }

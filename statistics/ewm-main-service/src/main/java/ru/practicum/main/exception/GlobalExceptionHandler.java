@@ -32,12 +32,34 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleIllegalState(IllegalStateException ex) {
+        return ApiError.builder()
+                .status(HttpStatus.CONFLICT.name())
+                .reason("Illegal state")
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
     @ExceptionHandler({IllegalArgumentException.class, MethodArgumentNotValidException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleBadRequest(Exception ex) {
         return ApiError.builder()
                 .status(HttpStatus.BAD_REQUEST.name())
                 .reason("Bad request")
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiError handleUnknown(Exception ex) {
+        return ApiError.builder()
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.name())
+                .reason("Internal error")
                 .message(ex.getMessage())
                 .timestamp(LocalDateTime.now())
                 .build();

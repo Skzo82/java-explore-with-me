@@ -27,7 +27,6 @@ public class PublicCategoryController {
 
     @GetMapping("/{catId}")
     public CategoryDto get(@PathVariable Long catId) {
-        // opzionale: esponi un metodo in interfaccia o cast a impl
         return ((ru.practicum.main.service.CategoryServiceImpl) categoryService).get(catId);
     }
 }
