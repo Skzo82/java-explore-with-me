@@ -1,0 +1,195 @@
+{
+  "info": {
+    "name": "ExploreWithMe — Main Service (Этап 2)",
+    "_postman_id": "3d9f9e3b-7e24-4f94-9c2c-2e9b8e1f2c22",
+    "description": "CRUD minimo utenti & categorie + healthcheck. Solo endpoints richiesti all'этап 2.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [],
+  "item": [
+    {
+      "name": "Health — GET /api/health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/health"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Должно вернуть 200 и текст OK",
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Body contains OK\", () => pm.expect(pm.response.text()).to.include(\"OK\"));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — POST /admin/users",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"user.stage2+{{$timestamp}}@example.com\",\n  \"name\": \"Stage2 User\"\n}"
+        },
+        "url": "{{baseUrl}}/admin/users"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200/201\", () => pm.expect([200,201]).to.include(pm.response.code));",
+              "const json = pm.response.json();",
+              "pm.expect(json).to.have.property('id');",
+              "pm.expect(json).to.have.property('email');",
+              "pm.collectionVariables.set('userId', json.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — GET /admin/users?from&size",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/users?from=0&size=10",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "admin", "users" ],
+          "query": [
+            { "key": "from", "value": "0" },
+            { "key": "size", "value": "10" }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+              "const arr = pm.response.json();",
+              "pm.expect(arr).to.be.an('array');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — POST /admin/categories",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Cat-Stage2-{{$timestamp}}\"\n}"
+        },
+        "url": "{{baseUrl}}/admin/categories"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200/201\", () => pm.expect([200,201]).to.include(pm.response.code));",
+              "const json = pm.response.json();",
+              "pm.expect(json).to.have.property('id');",
+              "pm.collectionVariables.set('catId', json.id);",
+              "pm.collectionVariables.set('catNameNew', 'Cat-Stage2-Updated-' + Date.now());"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — PATCH /admin/categories/{id}",
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"{{catNameNew}}\"\n}"
+        },
+        "url": "{{baseUrl}}/admin/categories/{{catId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.expect(json).to.have.property('name', pm.collectionVariables.get('catNameNew'));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public — GET /categories?from&size",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/categories?from=0&size=10",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "categories" ],
+          "query": [
+            { "key": "from", "value": "0" },
+            { "key": "size", "value": "10" }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+              "const arr = pm.response.json();",
+              "pm.expect(arr).to.be.an('array');",
+              "// Вернём true, если в списке есть обновлённое имя категории",
+              "const found = arr.some(c => c && c.name === pm.collectionVariables.get('catNameNew'));",
+              "pm.test(\"Updated category present\", () => pm.expect(found).to.be.true);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin — DELETE /admin/categories/{id}",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "{{baseUrl}}/admin/categories/{{catId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Spring может вернуть 200 (void) или 204 — допускаем оба",
+              "pm.test(\"Status 200/204\", () => pm.expect([200,204]).to.include(pm.response.code));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" }
+  ]
+}
