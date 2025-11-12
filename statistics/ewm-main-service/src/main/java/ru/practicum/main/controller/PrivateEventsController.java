@@ -1,10 +1,17 @@
 package ru.practicum.main.controller;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.main.dto.event.*;
+import ru.practicum.main.dto.event.EventFullDto;
+import ru.practicum.main.dto.event.EventShortDto;
+import ru.practicum.main.dto.event.NewEventDto;
+import ru.practicum.main.dto.event.UpdateEventUserRequest;
 import ru.practicum.main.service.EventService;
 
 import java.util.List;
@@ -13,21 +20,22 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/users/{userId}/events")
+@Validated
 public class PrivateEventsController {
 
     private final EventService service;
 
     @PostMapping
     public EventFullDto create(@PathVariable Long userId,
-                               @RequestBody NewEventDto dto) {
+                               @Valid @RequestBody NewEventDto dto) {
         /* # Создание события пользователем */
         return service.create(userId, dto);
     }
 
     @GetMapping
     public List<EventShortDto> myEvents(@PathVariable Long userId,
-                                        @RequestParam(defaultValue = "0") Integer from,
-                                        @RequestParam(defaultValue = "10") Integer size) {
+                                        @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+                                        @RequestParam(defaultValue = "10") @Positive Integer size) {
         /* # Преобразуем from/size в Pageable */
         Pageable pageable = PageRequest.of(from / size, size);
         return service.getUserEvents(userId, pageable);
@@ -51,7 +59,7 @@ public class PrivateEventsController {
     @PatchMapping("/{eventId}/cancel")
     public EventFullDto cancel(@PathVariable Long userId,
                                @PathVariable Long eventId) {
-        /* # Отмена события владельцем */
+        /* # Отмена события владельцем (без тела запроса) */
         return service.cancelByUser(userId, eventId);
     }
 }

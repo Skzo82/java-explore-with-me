@@ -2,10 +2,8 @@ package ru.practicum.main.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
-/* # Сущность события (основная таблица) */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -15,32 +13,31 @@ import java.time.LocalDateTime;
 @Table(name = "events")
 public class Event {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // идентификатор
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false, length = 2000)
-    private String annotation; // краткое описание
+    private String annotation;
 
     @Column(nullable = false, length = 7000)
-    private String description; // полное описание
+    private String description;
 
     @Column(name = "event_date", nullable = false)
-    private LocalDateTime eventDate; // дата и время события
+    private LocalDateTime eventDate;
 
     @Column(name = "created_on", nullable = false)
-    private LocalDateTime createdOn; // дата создания
+    private LocalDateTime createdOn;
 
     @Column(name = "published_on")
-    private LocalDateTime publishedOn; // дата публикации
+    private LocalDateTime publishedOn;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
-    private Category category; // категория события
+    private Category category;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "initiator_id", nullable = false)
-    private User initiator; // инициатор (автор)
+    private User initiator;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 15)
@@ -48,24 +45,34 @@ public class Event {
     private EventState state = EventState.PENDING;
 
     @Embedded
-    private Location location; // координаты (lat/lon)
+    private Location location;
 
     @Column(nullable = false)
     @Builder.Default
-    private Boolean paid = false; // платное ли событие
+    private Boolean paid = false;
 
     @Column(name = "participant_limit", nullable = false)
     @Builder.Default
-    private Integer participantLimit = 0; // лимит участников
+    private Integer participantLimit = 0;
 
     @Column(name = "request_moderation", nullable = false)
     @Builder.Default
-    private Boolean requestModeration = true; // требуется ли модерация заявок
+    private Boolean requestModeration = true;
 
     @Column(nullable = false)
-    private String title; // заголовок
+    private String title;
 
     @Column(nullable = false)
     @Builder.Default
-    private Integer views = 0; // количество просмотров
+    private Integer views = 0;
+
+    @PrePersist
+    void prePersist() {
+        if (createdOn == null) createdOn = LocalDateTime.now();
+        if (state == null) state = EventState.PENDING;
+        if (paid == null) paid = false;
+        if (requestModeration == null) requestModeration = true;
+        if (participantLimit == null) participantLimit = 0;
+        if (views == null) views = 0;
+    }
 }

@@ -2,23 +2,15 @@ package ru.practicum.main.mapper;
 
 import lombok.experimental.UtilityClass;
 import ru.practicum.main.dto.category.CategoryDto;
-import ru.practicum.main.dto.event.EventFullDto;
-import ru.practicum.main.dto.event.EventShortDto;
-import ru.practicum.main.dto.event.LocationDto;
-import ru.practicum.main.dto.event.NewEventDto;
+import ru.practicum.main.dto.event.*;
 import ru.practicum.main.dto.user.UserShortDto;
-import ru.practicum.main.model.Category;
-import ru.practicum.main.model.Event;
-import ru.practicum.main.model.EventState;
-import ru.practicum.main.model.Location;
-import ru.practicum.main.model.User;
+import ru.practicum.main.model.*;
 
 import java.time.LocalDateTime;
 
 @UtilityClass
 public class EventMapper {
 
-    /* # Создание новой сущности события из DTO */
     public static Event toNew(NewEventDto dto, User initiator, Category category) {
         Event e = new Event();
         e.setAnnotation(dto.getAnnotation());
@@ -31,19 +23,13 @@ public class EventMapper {
         e.setTitle(dto.getTitle());
         e.setInitiator(initiator);
         e.setCategory(category);
-        e.setState(EventState.PENDING); // <-- важный дефолт при создании
-
+        e.setState(EventState.PENDING); // важно!
         if (dto.getLocation() != null) {
-            // используем Double, без конверсий в float
-            e.setLocation(new Location(
-                    dto.getLocation().getLat(),
-                    dto.getLocation().getLon()
-            ));
+            e.setLocation(new Location(dto.getLocation().getLat(), dto.getLocation().getLon()));
         }
         return e;
     }
 
-    /* # Короткое представление события */
     public static EventShortDto toShort(Event e) {
         return EventShortDto.builder()
                 .id(e.getId())
@@ -56,9 +42,7 @@ public class EventMapper {
                 .build();
     }
 
-    /* # Полное представление события */
     public static EventFullDto toFull(Event e) {
-        // location -> LocationDto
         LocationDto loc = null;
         if (e.getLocation() != null) {
             loc = LocationDto.builder()
@@ -67,7 +51,6 @@ public class EventMapper {
                     .build();
         }
 
-        // category -> CategoryDto
         CategoryDto categoryDto = null;
         if (e.getCategory() != null) {
             categoryDto = CategoryDto.builder()
@@ -98,7 +81,6 @@ public class EventMapper {
                 .state(e.getState() != null ? e.getState().name() : null)
                 .category(categoryDto)
                 .initiator(initiatorDto)
-                // .confirmedRequests(...)  // при необходимости заполняется в сервисе
                 .views(e.getViews())
                 .location(loc)
                 .build();
