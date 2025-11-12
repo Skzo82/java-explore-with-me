@@ -38,7 +38,6 @@ public class AdminEventsController {
             @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
             @RequestParam(defaultValue = "10") @Positive Integer size
     ) {
-        /* # Преобразуем from/size в Pageable */
         Pageable pageable = PageRequest.of(from / size, size);
         return service.searchAdmin(users, states, categories, rangeStart, rangeEnd, pageable);
     }

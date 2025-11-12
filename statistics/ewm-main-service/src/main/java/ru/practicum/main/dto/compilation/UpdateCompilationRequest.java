@@ -1,6 +1,5 @@
 package ru.practicum.main.dto.compilation;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -11,15 +10,12 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class NewCompilationDto {
+public class UpdateCompilationRequest {
 
-    @NotBlank
     @Size(max = 50)
     private String title;
 
-    @Builder.Default
-    private Boolean pinned = false;
+    private Boolean pinned;
 
-    @Builder.Default
-    private Set<Long> events = Set.of();
+    private Set<Long> events;
 }

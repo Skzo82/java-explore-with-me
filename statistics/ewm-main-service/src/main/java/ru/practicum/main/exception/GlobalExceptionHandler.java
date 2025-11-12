@@ -4,10 +4,12 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 
@@ -15,13 +17,37 @@ import java.time.LocalDateTime;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /* # 404: не найдено */
+    /* # 404: сущность не найдена */
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiError handleNotFound(NotFoundException ex) {
         return ApiError.builder()
                 .status(HttpStatus.NOT_FOUND.name())
                 .reason("Not Found")
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    /* # 404: неизвестный путь (нет обработчика/ресурса) */
+    @ExceptionHandler(NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiError handleNoResource(NoResourceFoundException ex) {
+        return ApiError.builder()
+                .status(HttpStatus.NOT_FOUND.name())
+                .reason("Not Found")
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    /* # 405: неверный HTTP-метод */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+    public ApiError handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex) {
+        return ApiError.builder()
+                .status(HttpStatus.METHOD_NOT_ALLOWED.name())
+                .reason("Method Not Allowed")
                 .message(ex.getMessage())
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -58,7 +84,6 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
-    /* # 500: прочие неожиданные ошибки */
     @ExceptionHandler(Throwable.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiError handleOthers(Throwable ex) {
