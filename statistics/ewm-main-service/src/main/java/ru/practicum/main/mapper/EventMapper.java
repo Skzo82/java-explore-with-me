@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 @UtilityClass
 public class EventMapper {
 
+    /* # Создание новой сущности события из DTO */
     public static Event toNew(NewEventDto dto, User initiator, Category category) {
         Event e = new Event();
         e.setAnnotation(dto.getAnnotation());
@@ -27,38 +28,37 @@ public class EventMapper {
         e.setTitle(dto.getTitle());
         e.setInitiator(initiator);
         e.setCategory(category);
-
         if (dto.getLocation() != null) {
-            Double lat = dto.getLocation().getLat();
-            Double lon = dto.getLocation().getLon();
+            // --> ВАЖНО: используем Double, без конверсий к Float
             e.setLocation(new Location(
-                    lat == null ? null : lat.floatValue(),
-                    lon == null ? null : lon.floatValue()
+                    dto.getLocation().getLat(),
+                    dto.getLocation().getLon()
             ));
         }
         return e;
     }
 
+    /* # Короткое представление события */
     public static EventShortDto toShort(Event e) {
         return EventShortDto.builder()
                 .id(e.getId())
                 .annotation(e.getAnnotation())
-                .categoryId(e.getCategory() != null ? e.getCategory().getId() : null)
-                .eventDate(e.getEventDate())
                 .title(e.getTitle())
+                .eventDate(e.getEventDate())
                 .paid(e.isPaid())
                 .views(e.getViews())
+                .categoryId(e.getCategory() != null ? e.getCategory().getId() : null)
                 .build();
     }
 
+    /* # Полное представление события */
     public static EventFullDto toFull(Event e) {
         LocationDto loc = null;
         if (e.getLocation() != null) {
-            Float lat = e.getLocation().getLat();
-            Float lon = e.getLocation().getLon();
+            // --> ВАЖНО: источник тоже Double, возвращаем Double
             loc = LocationDto.builder()
-                    .lat(lat == null ? null : lat.doubleValue())
-                    .lon(lon == null ? null : lon.doubleValue())
+                    .lat(e.getLocation().getLat())
+                    .lon(e.getLocation().getLon())
                     .build();
         }
 

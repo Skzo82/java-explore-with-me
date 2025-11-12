@@ -1,9 +1,9 @@
 package ru.practicum.main.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.data.domain.Pageable;
 import ru.practicum.main.dto.event.EventFullDto;
 import ru.practicum.main.dto.event.EventShortDto;
 import ru.practicum.main.service.EventService;
@@ -11,14 +11,16 @@ import ru.practicum.main.service.EventService;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/* # Публичные эндпоинты событий */
 @RestController
-@RequestMapping("/events")
+@RequestMapping
 @RequiredArgsConstructor
 public class PublicEventsController {
 
     private final EventService eventService;
 
-    @GetMapping
+    /* # Публичный поиск */
+    @GetMapping("/events")
     public List<EventShortDto> searchPublic(
             @RequestParam(required = false) String text,
             @RequestParam(required = false, name = "categories") List<Long> categories,
@@ -30,12 +32,12 @@ public class PublicEventsController {
             @RequestParam(required = false, defaultValue = "false") Boolean onlyAvailable,
             @RequestParam(required = false) String sort,
             Pageable pageable) {
-        return eventService.getPublicEvents(
-                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, pageable);
+        return eventService.getPublicEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, pageable);
     }
 
-    @GetMapping("/{id}")
-    public EventFullDto getEventById(@PathVariable Long id) {
-        return eventService.getPublishedEventById(id);
+    /* # Публичное получение опубликованного события по id */
+    @GetMapping("/events/{eventId}")
+    public EventFullDto getPublicById(@PathVariable Long eventId) {
+        return eventService.getPublishedEventById(eventId);
     }
 }

@@ -1,18 +1,20 @@
 package ru.practicum.main.model;
 
 import jakarta.persistence.Embeddable;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
-/* # В БД как FLOAT, в DTO как Double -> конвертация в маппере */
+/* # Координаты события (встраиваемый объект JPA) */
 @Embeddable
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Location {
-    private Float lat;
-    private Float lon;
+
+    /* # Широта (latitude) */
+    private Double lat;
+
+    /* # Долгота (longitude) */
+    private Double lon;
 }

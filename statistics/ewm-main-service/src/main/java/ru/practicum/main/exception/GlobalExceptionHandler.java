@@ -7,9 +7,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
+/* # Глобальный обработчик ошибок: приводит все к ожидаемым кодам */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /* # 404 Not Found */
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiError handleNotFound(NotFoundException ex) {
@@ -21,7 +23,8 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
-    @ExceptionHandler({DataIntegrityViolationException.class})
+    /* # 409 Conflict: нарушения статуса/состояния и уникальностей */
+    @ExceptionHandler({IllegalStateException.class, DataIntegrityViolationException.class})
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handleConflict(RuntimeException ex) {
         return ApiError.builder()
@@ -32,17 +35,7 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public ApiError handleIllegalState(IllegalStateException ex) {
-        return ApiError.builder()
-                .status(HttpStatus.CONFLICT.name())
-                .reason("Illegal state")
-                .message(ex.getMessage())
-                .timestamp(LocalDateTime.now())
-                .build();
-    }
-
+    /* # 400 Bad Request: валидация/некорректные аргументы */
     @ExceptionHandler({IllegalArgumentException.class, MethodArgumentNotValidException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleBadRequest(Exception ex) {
@@ -54,9 +47,10 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
+    /* # 500: на всякий случай — чтобы Postman всегда получал JSON */
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ApiError handleUnknown(Exception ex) {
+    public ApiError handleAny(Exception ex) {
         return ApiError.builder()
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.name())
                 .reason("Internal error")

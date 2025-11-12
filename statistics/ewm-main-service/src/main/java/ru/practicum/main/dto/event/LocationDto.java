@@ -1,16 +1,14 @@
 package ru.practicum.main.dto.event;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+/* # Координаты события (DTO) */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class LocationDto {
-    @NotNull
-    private Double lat;
-    @NotNull
-    private Double lon;
+    private Double lat; // # широта
+    private Double lon; // # долгота
 }
