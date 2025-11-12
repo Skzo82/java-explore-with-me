@@ -9,10 +9,25 @@ public final class UserMapper {
     }
 
     public static UserDto toDto(User u) {
-        return UserDto.builder().id(u.getId()).email(u.getEmail()).name(u.getName()).build();
+        return UserDto.builder()
+                .id(u.getId())
+                .email(u.getEmail())
+                .name(u.getName())
+                .build();
+    }
+
+    public static UserShortDto toShortDto(User u) {
+        if (u == null) return null;
+        return UserShortDto.builder()
+                .id(u.getId())
+                .name(u.getName())
+                .build();
     }
 
     public static User fromNew(NewUserRequest r) {
-        return User.builder().email(r.getEmail()).name(r.getName()).build();
+        return User.builder()
+                .email(r.getEmail())
+                .name(r.getName())
+                .build();
     }
 }
