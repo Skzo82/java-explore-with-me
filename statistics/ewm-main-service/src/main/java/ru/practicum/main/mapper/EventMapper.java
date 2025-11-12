@@ -14,43 +14,45 @@ import ru.practicum.main.model.User;
 
 import java.time.LocalDateTime;
 
-/* # Маппер для событий */
 @UtilityClass
 public class EventMapper {
 
-    /* # Создание новой доменной сущности из DTO */
+    /* Создание новой сущности события из DTO */
     public static Event toNew(NewEventDto dto, User initiator, Category category) {
         Event e = new Event();
         e.setAnnotation(dto.getAnnotation());
         e.setDescription(dto.getDescription());
         e.setEventDate(dto.getEventDate());
         e.setCreatedOn(LocalDateTime.now());
-        e.setPaid(Boolean.TRUE.equals(dto.getPaid()));
+        e.setPaid(Boolean.TRUE.equals(dto.getPaid()));                // <— getPaid()
         e.setParticipantLimit(dto.getParticipantLimit() == null ? 0 : dto.getParticipantLimit());
-        e.setRequestModeration(Boolean.TRUE.equals(dto.getRequestModeration()));
+        e.setRequestModeration(Boolean.TRUE.equals(dto.getRequestModeration())); // <— getRequestModeration()
         e.setTitle(dto.getTitle());
         e.setInitiator(initiator);
         e.setCategory(category);
         if (dto.getLocation() != null) {
-            e.setLocation(new Location(dto.getLocation().getLat(), dto.getLocation().getLon()));
+            e.setLocation(new Location(
+                    dto.getLocation().getLat(),
+                    dto.getLocation().getLon()
+            ));
         }
         return e;
     }
 
-    /* # Короткое представление */
+    /* Короткое представление события */
     public static EventShortDto toShort(Event e) {
         return EventShortDto.builder()
                 .id(e.getId())
                 .annotation(e.getAnnotation())
                 .title(e.getTitle())
                 .eventDate(e.getEventDate())
-                .paid(e.isPaid())
+                .paid(Boolean.TRUE.equals(e.getPaid()))               // <— getPaid()
                 .views(e.getViews())
                 .categoryId(e.getCategory() != null ? e.getCategory().getId() : null)
                 .build();
     }
 
-    /* # Полное представление (CategoryDto + UserShortDto) */
+    /* Полное представление события */
     public static EventFullDto toFull(Event e) {
         LocationDto loc = null;
         if (e.getLocation() != null) {
@@ -83,13 +85,14 @@ public class EventMapper {
                 .eventDate(e.getEventDate())
                 .createdOn(e.getCreatedOn())
                 .publishedOn(e.getPublishedOn())
-                .paid(e.isPaid())
+                .paid(Boolean.TRUE.equals(e.getPaid()))               // <— getPaid()
                 .participantLimit(e.getParticipantLimit())
-                .requestModeration(e.isRequestModeration())
+                .requestModeration(Boolean.TRUE.equals(e.getRequestModeration())) // <— getRequestModeration()
                 .title(e.getTitle())
                 .state(e.getState() != null ? e.getState().name() : null)
                 .category(categoryDto)
                 .initiator(initiatorDto)
+                // .confirmedRequests(<считается в сервисе при необходимости>)
                 .views(e.getViews())
                 .location(loc)
                 .build();

@@ -4,94 +4,82 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.main.dto.request.ParticipationRequestDto;
-import ru.practicum.main.exception.NotFoundException;
 import ru.practicum.main.exception.ConflictException;
+import ru.practicum.main.exception.NotFoundException;
+import ru.practicum.main.mapper.ParticipationRequestMapper;
+import ru.practicum.main.model.Event;
+import ru.practicum.main.model.ParticipationRequest;
+import ru.practicum.main.model.RequestStatus;
+import ru.practicum.main.model.User;
+import ru.practicum.main.repository.EventRepository;
+import ru.practicum.main.repository.ParticipationRequestRepository;
+import ru.practicum.main.repository
+        .UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
+import java.util.List;
 
-/* # Простейшая in-memory реализация заявок на участие
-   # Цель — пройти API-тесты без 500 и обеспечить базовую логику:
-   # - создание -> PENDING
-   # - список заявок пользователя
-   # - отмена -> CANCELED
-*/
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class ParticipationRequestServiceImpl implements ParticipationRequestService {
 
-    /* # Генератор идентификаторов */
-    private final AtomicLong seq = new AtomicLong(0);
-
-    /* # Хранилище заявок по id */
-    private final Map<Long, ParticipationRequestDto> byId = new ConcurrentHashMap<>();
-
-    /* # Индексация заявок по пользователю (requester) */
-    private final Map<Long, Set<Long>> byUser = new ConcurrentHashMap<>();
+    private final ParticipationRequestRepository requestRepository;
+    private final EventRepository eventRepository;
+    private final UserRepository userRepository;
 
     @Override
+    @Transactional
     public ParticipationRequestDto create(long userId, long eventId) {
-        /* # Простейшие проверки параметров */
-        if (userId <= 0) {
-            throw new IllegalArgumentException("userId must be positive");
-        }
-        if (eventId <= 0) {
-            throw new IllegalArgumentException("eventId must be positive");
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found: " + userId));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event not found: " + eventId));
+
+        if (event.getInitiator() != null && event.getInitiator().getId().equals(userId)) {
+            throw new ConflictException("Initiator cannot request participation in own event");
         }
 
-        /* # Имитируем правило idempotency: у пользователя не может быть дубликата на тот же event */
-        boolean alreadyExists = byUser
-                .getOrDefault(userId, Collections.emptySet())
-                .stream()
-                .map(byId::get)
-                .anyMatch(r -> r != null && Objects.equals(r.getEvent(), eventId)
-                        && !"CANCELED".equals(r.getStatus()));
-        if (alreadyExists) {
+        if (requestRepository.existsByEvent_IdAndRequester_Id(eventId, userId)) {
             throw new ConflictException("Request already exists for this user and event");
         }
 
-        long id = seq.incrementAndGet();
-        ParticipationRequestDto dto = ParticipationRequestDto.builder()
-                .id(id)
-                .event(eventId)
-                .requester(userId)
+        int limit = event.getParticipantLimit(); // int, non Integer
+        if (limit > 0) {
+            long confirmed = requestRepository.countByEvent_IdAndStatus(eventId, RequestStatus.CONFIRMED);
+            if (confirmed >= limit) {
+                throw new ConflictException("Participant limit has been reached");
+            }
+        }
+
+        boolean autoConfirm = !Boolean.TRUE.equals(event.getRequestModeration()) || limit == 0;
+
+        ParticipationRequest req = ParticipationRequest.builder()
+                .event(event)
+                .requester(user)
                 .created(LocalDateTime.now())
-                .status("PENDING")
+                .status(autoConfirm ? RequestStatus.CONFIRMED : RequestStatus.PENDING)
                 .build();
 
-        byId.put(id, dto);
-        byUser.computeIfAbsent(userId, k -> new LinkedHashSet<>()).add(id);
-        return dto;
+        req = requestRepository.save(req);
+        return ParticipationRequestMapper.toDto(req);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<ParticipationRequestDto> findAll(long userId) {
-        /* # Возвращаем заявки конкретного пользователя, по возрастанию id */
-        return byUser.getOrDefault(userId, Collections.emptySet())
+        return requestRepository.findAllByRequester_IdOrderByCreatedDesc(userId)
                 .stream()
-                .map(byId::get)
-                .filter(Objects::nonNull)
-                .sorted(Comparator.comparingLong(ParticipationRequestDto::getId))
-                .collect(Collectors.toList());
+                .map(ParticipationRequestMapper::toDto)
+                .toList();
     }
 
     @Override
+    @Transactional
     public ParticipationRequestDto cancel(long userId, long requestId) {
-        ParticipationRequestDto dto = byId.get(requestId);
-        if (dto == null) {
-            throw new NotFoundException("Request not found: " + requestId);
-        }
-        /* # Пользователь может отменить только свою заявку */
-        if (!Objects.equals(dto.getRequester(), userId)) {
-            throw new ConflictException("User cannot cancel a request of another user");
-        }
-        dto.setStatus("CANCELED");
-        byId.put(requestId, dto);
-        return dto;
+        ParticipationRequest req = requestRepository.findByIdAndRequester_Id(requestId, userId)
+                .orElseThrow(() -> new NotFoundException("Request not found: " + requestId));
+        req.setStatus(RequestStatus.CANCELED);
+        req = requestRepository.save(req);
+        return ParticipationRequestMapper.toDto(req);
     }
 }

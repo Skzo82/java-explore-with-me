@@ -1,58 +1,70 @@
 package ru.practicum.main.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-/* # Сущность события: поля синхронизированы с DTO и маппером */
-@Entity
-@Table(name = "events")
+/* # Сущность события (основная таблица) */
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Entity
+@Table(name = "events")
 public class Event {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; // идентификатор
 
-    private String annotation;
-    private String description;
+    @Column(nullable = false, length = 2000)
+    private String annotation; // краткое описание
 
-    /* Важно: name=title, сеттер/геттер есть через Lombok */
-    @Column(name = "title")
-    private String title;
+    @Column(nullable = false, length = 7000)
+    private String description; // полное описание
 
-    private LocalDateTime eventDate;
-    private LocalDateTime createdOn;
-    private LocalDateTime publishedOn;
+    @Column(name = "event_date", nullable = false)
+    private LocalDateTime eventDate; // дата и время события
 
-    /* boolean -> Lombok сгенерирует isPaid()/isRequestModeration() */
-    private boolean paid;
-    private boolean requestModeration;
+    @Column(name = "created_on", nullable = false)
+    private LocalDateTime createdOn; // дата создания
 
-    private int participantLimit;
-    private int views;
+    @Column(name = "published_on")
+    private LocalDateTime publishedOn; // дата публикации
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category; // категория события
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "initiator_id", nullable = false)
+    private User initiator; // инициатор (автор)
 
     @Enumerated(EnumType.STRING)
-    private EventState state = EventState.PENDING;
+    @Column(nullable = false, length = 15)
+    private EventState state; // PENDING / PUBLISHED / CANCELED
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "initiator_id")
-    private User initiator;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    private Category category;
-
-    /* Храним координаты в отдельных колонках */
     @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "lat", column = @Column(name = "location_lat")),
-            @AttributeOverride(name = "lon", column = @Column(name = "location_lon"))
-    })
-    private Location location;
+    private Location location; // координаты (lat/lon)
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean paid = false; // платное ли событие
+
+    @Column(name = "participant_limit", nullable = false)
+    @Builder.Default
+    private Integer participantLimit = 0; // лимит участников
+
+    @Column(name = "request_moderation", nullable = false)
+    @Builder.Default
+    private Boolean requestModeration = true; // требуется ли модерация заявок
+
+    @Column(nullable = false)
+    private String title; // заголовок
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer views = 0; // количество просмотров
 }
