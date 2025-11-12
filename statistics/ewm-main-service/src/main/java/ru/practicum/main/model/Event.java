@@ -44,7 +44,8 @@ public class Event {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 15)
-    private EventState state; // PENDING / PUBLISHED / CANCELED
+    @Builder.Default
+    private EventState state = EventState.PENDING;
 
     @Embedded
     private Location location; // координаты (lat/lon)

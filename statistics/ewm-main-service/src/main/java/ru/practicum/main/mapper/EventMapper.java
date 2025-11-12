@@ -9,6 +9,7 @@ import ru.practicum.main.dto.event.NewEventDto;
 import ru.practicum.main.dto.user.UserShortDto;
 import ru.practicum.main.model.Category;
 import ru.practicum.main.model.Event;
+import ru.practicum.main.model.EventState;
 import ru.practicum.main.model.Location;
 import ru.practicum.main.model.User;
 
@@ -17,20 +18,23 @@ import java.time.LocalDateTime;
 @UtilityClass
 public class EventMapper {
 
-    /* Создание новой сущности события из DTO */
+    /* # Создание новой сущности события из DTO */
     public static Event toNew(NewEventDto dto, User initiator, Category category) {
         Event e = new Event();
         e.setAnnotation(dto.getAnnotation());
         e.setDescription(dto.getDescription());
         e.setEventDate(dto.getEventDate());
         e.setCreatedOn(LocalDateTime.now());
-        e.setPaid(Boolean.TRUE.equals(dto.getPaid()));                // <— getPaid()
+        e.setPaid(Boolean.TRUE.equals(dto.getPaid()));
         e.setParticipantLimit(dto.getParticipantLimit() == null ? 0 : dto.getParticipantLimit());
-        e.setRequestModeration(Boolean.TRUE.equals(dto.getRequestModeration())); // <— getRequestModeration()
+        e.setRequestModeration(Boolean.TRUE.equals(dto.getRequestModeration()));
         e.setTitle(dto.getTitle());
         e.setInitiator(initiator);
         e.setCategory(category);
+        e.setState(EventState.PENDING); // <-- важный дефолт при создании
+
         if (dto.getLocation() != null) {
+            // используем Double, без конверсий в float
             e.setLocation(new Location(
                     dto.getLocation().getLat(),
                     dto.getLocation().getLon()
@@ -39,21 +43,22 @@ public class EventMapper {
         return e;
     }
 
-    /* Короткое представление события */
+    /* # Короткое представление события */
     public static EventShortDto toShort(Event e) {
         return EventShortDto.builder()
                 .id(e.getId())
                 .annotation(e.getAnnotation())
                 .title(e.getTitle())
                 .eventDate(e.getEventDate())
-                .paid(Boolean.TRUE.equals(e.getPaid()))               // <— getPaid()
+                .paid(Boolean.TRUE.equals(e.getPaid()))
                 .views(e.getViews())
                 .categoryId(e.getCategory() != null ? e.getCategory().getId() : null)
                 .build();
     }
 
-    /* Полное представление события */
+    /* # Полное представление события */
     public static EventFullDto toFull(Event e) {
+        // location -> LocationDto
         LocationDto loc = null;
         if (e.getLocation() != null) {
             loc = LocationDto.builder()
@@ -62,6 +67,7 @@ public class EventMapper {
                     .build();
         }
 
+        // category -> CategoryDto
         CategoryDto categoryDto = null;
         if (e.getCategory() != null) {
             categoryDto = CategoryDto.builder()
@@ -85,14 +91,14 @@ public class EventMapper {
                 .eventDate(e.getEventDate())
                 .createdOn(e.getCreatedOn())
                 .publishedOn(e.getPublishedOn())
-                .paid(Boolean.TRUE.equals(e.getPaid()))               // <— getPaid()
+                .paid(Boolean.TRUE.equals(e.getPaid()))
                 .participantLimit(e.getParticipantLimit())
-                .requestModeration(Boolean.TRUE.equals(e.getRequestModeration())) // <— getRequestModeration()
+                .requestModeration(Boolean.TRUE.equals(e.getRequestModeration()))
                 .title(e.getTitle())
                 .state(e.getState() != null ? e.getState().name() : null)
                 .category(categoryDto)
                 .initiator(initiatorDto)
-                // .confirmedRequests(<считается в сервисе при необходимости>)
+                // .confirmedRequests(...)  // при необходимости заполняется в сервисе
                 .views(e.getViews())
                 .location(loc)
                 .build();
