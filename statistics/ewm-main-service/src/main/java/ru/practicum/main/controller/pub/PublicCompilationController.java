@@ -12,27 +12,24 @@ import ru.practicum.main.service.CompilationService;
 
 import java.util.List;
 
-/* # Публичные эндпоинты подборок (компиляций) */
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/compilations")
+@RequiredArgsConstructor
 @Validated
 public class PublicCompilationController {
 
     private final CompilationService compilations;
 
-    /* # Получить список подборок с фильтром по "pinned" и пагинацией -> 200 */
     @GetMapping
     public List<CompilationDto> findAll(@RequestParam(required = false) Boolean pinned,
-                                        @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
-                                        @RequestParam(defaultValue = "10") @Positive Integer size) {
+                                        @RequestParam(defaultValue = "0") @PositiveOrZero int from,
+                                        @RequestParam(defaultValue = "10") @Positive int size) {
         Pageable pageable = PageRequest.of(from / size, size);
         return compilations.findAllPublic(pinned, pageable);
     }
 
-    /* # Получить одну подборку по id -> 200 */
     @GetMapping("/{compId}")
-    public CompilationDto getById(@PathVariable @Positive Long compId) {
+    public CompilationDto getById(@PathVariable @Positive long compId) {
         return compilations.getByIdPublic(compId);
     }
 }
