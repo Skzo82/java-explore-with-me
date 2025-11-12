@@ -1,302 +1,336 @@
 {
   "info": {
     "name": "ExploreWithMe — Main & Stats (stage 2, local)",
-    "_postman_id": "c7f6097e-0a40-4a33-9b4b-ewm-collection-lite",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Suite ricostruita per EWM: copre Health, Users, Categories, Events (admin/private/public), Requests, Compilations e Stats."
+    "_postman_id": "c7f6097e-0a40-4a33-9b4b-ewm-collection",
+    "description": "Collezione completa per EWM Stage 2: health, admin (users, categories, compilations, events), private (events, requests), public (events, categories, compilations) e stats.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "if (!pm.environment.get('timestamp')) {",
+          "  pm.environment.set('timestamp', Date.now());",
+          "}",
+          "if (!pm.environment.get('userEmail')) {",
+          "  pm.environment.set('userEmail', `user${pm.environment.get('timestamp')}@example.com`);",
+          "}",
+          "if (!pm.environment.get('userName')) {",
+          "  pm.environment.set('userName', `User ${pm.environment.get('timestamp')}`);",
+          "}",
+          "if (!pm.environment.get('categoryName')) {",
+          "  pm.environment.set('categoryName', `Mostre ${pm.environment.get('timestamp')}`);",
+          "}"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ],
   "item": [
     {
-      "name": "00 · Health",
+      "name": "Health",
       "item": [
         {
           "name": "Main /actuator/health",
           "request": { "method": "GET", "url": "{{baseUrlMain}}/actuator/health" },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('200', ()=> pm.response.code===200);",
-            "const b=pm.response.json(); pm.test('UP', ()=> (b.status||'').toUpperCase()==='UP');"
-          ]}} ]
-        },
-        {
-          "name": "Stats /actuator/health",
-          "request": { "method": "GET", "url": "{{baseUrlStats}}/actuator/health" },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('200', ()=> pm.response.code===200);",
-            "const b=pm.response.json(); pm.test('UP', ()=> (b.status||'').toUpperCase()==='UP');"
-          ]}} ]
-        }
-      ]
-    },
-
-    {
-      "name": "10 · Admin · Users",
-      "item": [
-        {
-          "name": "Prepare timestamp",
-          "request": { "method": "GET", "url": "http://postman-echo.com/time/now" },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.environment.set('timestamp', Date.now());",
-            "pm.environment.set('userEmail', `user${pm.environment.get('timestamp')}@example.com`);",
-            "pm.environment.set('userName', `User ${pm.environment.get('timestamp')}`);",
-            "pm.environment.set('categoryName', `Category ${pm.environment.get('timestamp')}`);",
-            "pm.environment.set('compTitle', `Top ${pm.environment.get('timestamp')}`);",
-            "pm.test('timestamp prepared', ()=> !!pm.environment.get('timestamp'));"
-          ]}} ]
-        },
-        {
-          "name": "Create user",
-          "request": {
-            "method": "POST",
-            "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "url": "{{baseUrlMain}}/admin/users",
-            "body": { "mode": "raw", "raw": "{ \"email\": \"{{userEmail}}\", \"name\": \"{{userName}}\" }" }
-          },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('201/200', ()=> [200,201].includes(pm.response.code));",
-            "const b=pm.response.json(); pm.environment.set('userId', b.id);",
-            "pm.test('has id/email/name', ()=> !!b.id && !!b.email && !!b.name);"
-          ]}} ]
-        },
-        {
-          "name": "List users",
-          "request": { "method": "GET", "url": "{{baseUrlMain}}/admin/users?from=0&size=20" },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('200', ()=> pm.response.code===200);"
-          ]}} ]
-        }
-      ]
-    },
-
-    {
-      "name": "20 · Admin · Categories",
-      "item": [
-        {
-          "name": "Create category",
-          "request": {
-            "method": "POST",
-            "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "url": "{{baseUrlMain}}/admin/categories",
-            "body": { "mode": "raw", "raw": "{ \"name\": \"{{categoryName}}\" }" }
-          },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('201/200', ()=> [200,201].includes(pm.response.code));",
-            "const b=pm.response.json(); pm.environment.set('categoryId', b.id);",
-            "pm.test('has id/name', ()=> !!b.id && !!b.name);"
-          ]}} ]
-        },
-        {
-          "name": "Patch category",
-          "request": {
-            "method": "PATCH",
-            "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "url": "{{baseUrlMain}}/admin/categories/{{categoryId}}",
-            "body": { "mode": "raw", "raw": "{ \"name\": \"{{categoryName}} (edit)\" }" }
-          },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('200', ()=> pm.response.code===200);"
-          ]}} ]
-        },
-        {
-          "name": "Public list categories",
-          "request": { "method": "GET", "url": "{{baseUrlMain}}/categories?from=0&size=10" },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('200', ()=> pm.response.code===200);"
-          ]}} ]
-        }
-      ]
-    },
-
-    {
-      "name": "30 · Private · Events (author)",
-      "item": [
-        {
-          "name": "Create event (PENDING)",
-          "request": {
-            "method": "POST",
-            "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "url": "{{baseUrlMain}}/users/{{userId}}/events",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"annotation\": \"Annuncio lungo {{timestamp}}\",\n  \"description\": \"Descrizione lunga {{timestamp}}\",\n  \"eventDate\": \"{{$next3h}}\",\n  \"location\": {\"lat\":45.46, \"lon\":9.19},\n  \"paid\": false,\n  \"participantLimit\": 0,\n  \"requestModeration\": true,\n  \"title\": \"Titolo {{timestamp}}\",\n  \"category\": {{categoryId}}\n}"
-            }
-          },
           "event": [
-            { "listen": "prerequest", "script": { "exec": [
-              "const d = new Date(Date.now()+3*60*60*1000).toISOString().replace('T',' ').substring(0,19);",
-              "pm.variables.set('$next3h', d);"
-            ]}},
             { "listen": "test", "script": { "exec": [
-              "pm.test('201/200', ()=> [200,201].includes(pm.response.code));",
-              "const b=pm.response.json(); pm.environment.set('eventId', b.id);",
-              "pm.test('state PENDING|PUBLISHED', ()=> ['PENDING','PUBLISHED'].includes((b.state||'').toUpperCase()));"
+              "pm.test('200', ()=> pm.response.code===200);",
+              "const b=pm.response.json();",
+              "pm.test('UP', ()=> (b.status||'').toUpperCase()==='UP');"
             ]}}
           ]
         },
         {
-          "name": "My events list",
-          "request": { "method": "GET", "url": "{{baseUrlMain}}/users/{{userId}}/events?from=0&size=10" },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('200', ()=> pm.response.code===200);"
-          ]}} ]
-        },
-        {
-          "name": "Cancel my event",
-          "request": { "method": "PATCH", "url": "{{baseUrlMain}}/users/{{userId}}/events/{{eventId}}/cancel" },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('[200] allowed or [409] if already published', ()=> [200,409].includes(pm.response.code));"
-          ]}} ]
+          "name": "Stats /actuator/health",
+          "request": { "method": "GET", "url": "{{baseUrlStats}}/actuator/health" },
+          "event": [
+            { "listen": "test", "script": { "exec": [
+              "pm.test('200', ()=> pm.response.code===200);",
+              "const b=pm.response.json();",
+              "pm.test('UP', ()=> (b.status||'').toUpperCase()==='UP');"
+            ]}}
+          ]
         }
       ]
     },
 
     {
-      "name": "40 · Admin · Events",
+      "name": "Admin · Users",
       "item": [
         {
-          "name": "Admin search by user & range",
+          "name": "POST /admin/users — create",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrlMain}}/admin/users",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"name\": \"{{userName}}\"\n}" }
+          },
+          "event": [
+            { "listen": "test", "script": { "exec": [
+              "pm.test('201/200', ()=> [200,201].includes(pm.response.code));",
+              "const b=pm.response.json(); pm.environment.set('userId', b.id);",
+              "pm.test('userId saved', ()=> !!pm.environment.get('userId'));"
+            ]}}
+          ]
+        },
+        {
+          "name": "GET /admin/users",
+          "request": { "method": "GET", "url": "{{baseUrlMain}}/admin/users?from=0&size=20" },
+          "event": [{ "listen":"test","script":{"exec":["pm.test('200',()=> pm.response.code===200);"]}}]
+        },
+        {
+          "name": "DELETE /admin/users/{id}",
+          "request": { "method": "DELETE", "url": "{{baseUrlMain}}/admin/users/{{userId}}" },
+          "event": [{ "listen":"test","script":{"exec":["pm.test('200/204',()=>[200,204].includes(pm.response.code));"]}}]
+        }
+      ]
+    },
+
+    {
+      "name": "Admin · Categories",
+      "item": [
+        {
+          "name": "POST /admin/categories — create",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrlMain}}/admin/categories",
+            "body": { "mode": "raw", "raw": "{ \"name\": \"{{categoryName}}\" }" }
+          },
+          "event": [
+            { "listen":"test","script":{"exec":[
+              "pm.test('201/200',()=>[200,201].includes(pm.response.code));",
+              "const b=pm.response.json(); pm.environment.set('categoryId', b.id);",
+              "pm.test('categoryId saved', ()=> !!pm.environment.get('categoryId'));"
+            ]}}
+          ]
+        },
+        {
+          "name": "PATCH /admin/categories/{id}",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrlMain}}/admin/categories/{{categoryId}}",
+            "body": { "mode": "raw", "raw": "{ \"name\": \"Mostre mod {{timestamp}}\" }" }
+          },
+          "event": [{ "listen":"test","script":{"exec":["pm.test('200',()=> pm.response.code===200);"]}}]
+        },
+        {
+          "name": "GET /categories",
+          "request": { "method": "GET", "url": "{{baseUrlMain}}/categories?from=0&size=10" },
+          "event": [{ "listen":"test","script":{"exec":["pm.test('200',()=> pm.response.code===200);"]}}]
+        },
+        {
+          "name": "DELETE /admin/categories/{id}",
+          "request": { "method": "DELETE", "url": "{{baseUrlMain}}/admin/categories/{{categoryId}}" },
+          "event": [{ "listen":"test","script":{"exec":["pm.test('200/204',()=>[200,204].includes(pm.response.code));"]}}]
+        }
+      ]
+    },
+
+    {
+      "name": "Private · Events (author)",
+      "item": [
+        {
+          "name": "POST /users/{userId}/events — create (PENDING)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrlMain}}/users/{{userId}}/events",
+            "body": { "mode": "raw", "raw":
+            "{\n  \"annotation\": \"Mostra illustrata molto lunga...\",\n  \"description\": \"Descrizione ricca...\",\n  \"eventDate\": \"{{$eventDate}}\",\n  \"location\": { \"lat\": 45.46, \"lon\": 9.19 },\n  \"paid\": false,\n  \"participantLimit\": 0,\n  \"requestModeration\": true,\n  \"title\": \"Mostra del secolo\",\n  \"category\": {{categoryId}}\n}" }
+          },
+          "event": [
+            { "listen": "prerequest", "script": { "exec": [
+              "const d=new Date(Date.now()+3*60*60*1000);",
+              "const f=`${d.getFullYear()}-${('0'+(d.getMonth()+1)).slice(-2)}-${('0'+d.getDate()).slice(-2)} ${('0'+d.getHours()).slice(-2)}:${('0'+d.getMinutes()).slice(-2)}:${('0'+d.getSeconds()).slice(-2)}`;",
+              "pm.variables.set('$eventDate',f);"
+            ]}},
+            { "listen":"test","script":{"exec":[
+              "pm.test('201/200',()=>[200,201].includes(pm.response.code));",
+              "const b=pm.response.json(); pm.environment.set('eventId', b.id);",
+              "pm.test('state PENDING|PUBLISHED',()=> ['PENDING','PUBLISHED'].includes((b.state||'').toUpperCase()));"
+            ]}}
+          ]
+        },
+        {
+          "name": "GET /users/{userId}/events",
+          "request": { "method": "GET", "url": "{{baseUrlMain}}/users/{{userId}}/events?from=0&size=10" },
+          "event": [{ "listen":"test","script":{"exec":["pm.test('200',()=> pm.response.code===200);"]}}]
+        },
+        {
+          "name": "PATCH /users/{userId}/events/{eventId} — update fields",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrlMain}}/users/{{userId}}/events/{{eventId}}",
+            "body": { "mode": "raw", "raw":
+            "{\n  \"annotation\": \"Mostra aggiornata\",\n  \"title\": \"Mostra aggiornata {{timestamp}}\"\n}" }
+          },
+          "event": [{ "listen":"test","script":{"exec":["pm.test('200',()=> pm.response.code===200);"]}}]
+        },
+        {
+          "name": "PATCH /users/{userId}/events/{eventId}/cancel",
+          "request": { "method": "PATCH", "url": "{{baseUrlMain}}/users/{{userId}}/events/{{eventId}}/cancel" },
+          "event": [{ "listen":"test","script":{"exec":["pm.test('200',()=> pm.response.code===200);"]}}]
+        }
+      ]
+    },
+
+    {
+      "name": "Admin · Events",
+      "item": [
+        {
+          "name": "PATCH /admin/events/{eventId} — publish",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrlMain}}/admin/events/{{eventId}}",
+            "body": { "mode": "raw", "raw": "{ \"stateAction\": \"PUBLISH_EVENT\" }" }
+          },
+          "event": [{ "listen":"test","script":{"exec":["pm.test('200',()=> pm.response.code===200);"]}}]
+        },
+        {
+          "name": "GET /admin/events (search)",
           "request": {
             "method": "GET",
             "url": "{{baseUrlMain}}/admin/events?users={{userId}}&from=0&size=10&rangeStart={{start}}&rangeEnd={{end}}"
           },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('200', ()=> pm.response.code===200);"
-          ]}} ]
-        },
-        {
-          "name": "Publish event",
-          "request": {
-            "method": "PATCH",
-            "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "url": "{{baseUrlMain}}/admin/events/{{eventId}}",
-            "body": { "mode": "raw", "raw": "{ \"stateAction\": \"PUBLISH_EVENT\" }" }
-          },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('200|409', ()=> [200,409].includes(pm.response.code));"
-          ]}} ]
+          "event": [{ "listen":"test","script":{"exec":["pm.test('200',()=> pm.response.code===200);"]}}]
         }
       ]
     },
 
     {
-      "name": "50 · Public · Events",
+      "name": "Private · Participation Requests",
       "item": [
         {
-          "name": "Public search text/date",
-          "request": { "method": "GET", "url": "{{baseUrlMain}}/events?text={{q}}&from=0&size=10&rangeStart={{start}}&rangeEnd={{end}}" },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('200', ()=> pm.response.code===200);"
-          ]}} ]
-        },
-        {
-          "name": "Public detail by id",
-          "request": { "method": "GET", "url": "{{baseUrlMain}}/events/{{eventId}}" },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('200', ()=> pm.response.code===200);"
-          ]}} ]
-        }
-      ]
-    },
-
-    {
-      "name": "60 · Participation Requests",
-      "item": [
-        {
-          "name": "Create request (user -> event)",
+          "name": "POST /users/{userId}/requests?eventId=",
           "request": { "method": "POST", "url": "{{baseUrlMain}}/users/{{userId}}/requests?eventId={{eventId}}" },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('201/200|409', ()=> [200,201,409].includes(pm.response.code));",
-            "if (pm.response.code!==409) { const b=pm.response.json(); pm.environment.set('requestId', b.id); }"
-          ]}} ]
+          "event": [
+            { "listen":"test","script":{"exec":[
+              "pm.test('201/200/409',()=>[200,201,409].includes(pm.response.code));",
+              "if (pm.response.code!==409) { const b=pm.response.json(); pm.environment.set('reqId', b.id); }"
+            ]}}
+          ]
         },
         {
-          "name": "My requests list",
+          "name": "GET /users/{userId}/requests",
           "request": { "method": "GET", "url": "{{baseUrlMain}}/users/{{userId}}/requests" },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('200', ()=> pm.response.code===200);"
-          ]}} ]
+          "event": [{ "listen":"test","script":{"exec":["pm.test('200',()=> pm.response.code===200);"]}}]
         },
         {
-          "name": "Cancel my request",
-          "request": { "method": "PATCH", "url": "{{baseUrlMain}}/users/{{userId}}/requests/{{requestId}}/cancel" },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('200|404', ()=> [200,404].includes(pm.response.code));"
-          ]}} ]
+          "name": "PATCH /users/{userId}/requests/{reqId}/cancel",
+          "request": { "method": "PATCH", "url": "{{baseUrlMain}}/users/{{userId}}/requests/{{reqId}}/cancel" },
+          "event": [{ "listen":"test","script":{"exec":["pm.test('200/404',()=>[200,404].includes(pm.response.code));"]}}]
         }
       ]
     },
 
     {
-      "name": "70 · Compilations",
+      "name": "Admin · Compilations",
       "item": [
         {
-          "name": "Admin create compilation",
+          "name": "POST /admin/compilations — create",
           "request": {
             "method": "POST",
-            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrlMain}}/admin/compilations",
-            "body": { "mode": "raw", "raw": "{ \"title\": \"{{compTitle}}\", \"pinned\": true, \"events\": [{{eventId}}] }" }
+            "body": { "mode": "raw", "raw":
+            "{\n  \"title\": \"Top {{timestamp}}\",\n  \"pinned\": true,\n  \"events\": [{{eventId}}]\n}" }
           },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('201/200', ()=> [200,201].includes(pm.response.code));",
-            "const b=pm.response.json(); pm.environment.set('compId', b.id);"
-          ]}} ]
+          "event": [{ "listen":"test","script":{"exec":[
+            "pm.test('201/200',()=>[200,201].includes(pm.response.code));",
+            "const b=pm.response.json(); pm.environment.set('compId', b.id);",
+            "pm.test('compId saved',()=>!!pm.environment.get('compId'));"
+          ]}}]
         },
         {
-          "name": "Public list compilations (pinned)",
-          "request": { "method": "GET", "url": "{{baseUrlMain}}/compilations?pinned=true&from=0&size=10" },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('200', ()=> pm.response.code===200);"
-          ]}} ]
-        },
-        {
-          "name": "Public get compilation by id",
-          "request": { "method": "GET", "url": "{{baseUrlMain}}/compilations/{{compId}}" },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('200', ()=> pm.response.code===200);"
-          ]}} ]
-        },
-        {
-          "name": "Admin unpin compilation",
+          "name": "PATCH /admin/compilations/{id}",
           "request": {
             "method": "PATCH",
-            "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "url": "{{baseUrlMain}}/admin/compilations/{{compId}}/pinned?value=false"
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrlMain}}/admin/compilations/{{compId}}",
+            "body": { "mode": "raw", "raw":
+            "{\n  \"title\": \"Top aggiornato {{timestamp}}\",\n  \"pinned\": false\n}" }
           },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('204|200', ()=> [200,204].includes(pm.response.code));"
-          ]}} ]
+          "event": [{ "listen":"test","script":{"exec":["pm.test('200',()=> pm.response.code===200);"]}}]
         },
         {
-          "name": "Admin delete compilation",
+          "name": "PATCH /admin/compilations/{id}/pin?pinned=true",
+          "request": { "method": "PATCH", "url": "{{baseUrlMain}}/admin/compilations/{{compId}}/pin?pinned=true" },
+          "event": [{ "listen":"test","script":{"exec":["pm.test('204/200',()=>[200,204].includes(pm.response.code));"]}}]
+        },
+        {
+          "name": "PATCH /admin/compilations/{id}/events/{eventId} — add",
+          "request": { "method": "PATCH", "url": "{{baseUrlMain}}/admin/compilations/{{compId}}/events/{{eventId}}" },
+          "event": [{ "listen":"test","script":{"exec":["pm.test('204/200',()=>[200,204].includes(pm.response.code));"]}}]
+        },
+        {
+          "name": "DELETE /admin/compilations/{id}/events/{eventId} — remove",
+          "request": { "method": "DELETE", "url": "{{baseUrlMain}}/admin/compilations/{{compId}}/events/{{eventId}}" },
+          "event": [{ "listen":"test","script":{"exec":["pm.test('204/200',()=>[200,204].includes(pm.response.code));"]}}]
+        },
+        {
+          "name": "DELETE /admin/compilations/{id}",
           "request": { "method": "DELETE", "url": "{{baseUrlMain}}/admin/compilations/{{compId}}" },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('204|200', ()=> [200,204].includes(pm.response.code));"
-          ]}} ]
+          "event": [{ "listen":"test","script":{"exec":["pm.test('204/200',()=>[200,204].includes(pm.response.code));"]}}]
         }
       ]
     },
 
     {
-      "name": "80 · Stats Service",
+      "name": "Public · Compilations",
       "item": [
         {
-          "name": "Send hit",
-          "request": {
-            "method": "POST",
-            "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "url": "{{baseUrlStats}}/hit",
-            "body": { "mode": "raw", "raw": "{ \"app\": \"ewm-main-service\", \"uri\": \"/events/{{eventId}}\", \"ip\": \"127.0.0.1\", \"timestamp\": \"{{start}}\" }" }
-          },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('201/200', ()=> [200,201].includes(pm.response.code));"
-          ]}} ]
+          "name": "GET /compilations?pinned=true",
+          "request": { "method": "GET", "url": "{{baseUrlMain}}/compilations?pinned=true&from=0&size=10" },
+          "event": [{ "listen":"test","script":{"exec":["pm.test('200',()=> pm.response.code===200);"]}}]
         },
         {
-          "name": "Get stats (non unique)",
+          "name": "GET /compilations/{id}",
+          "request": { "method": "GET", "url": "{{baseUrlMain}}/compilations/{{compId}}" },
+          "event": [{ "listen":"test","script":{"exec":["pm.test('200/404',()=>[200,404].includes(pm.response.code));"]}}]
+        }
+      ]
+    },
+
+    {
+      "name": "Public · Events",
+      "item": [
+        {
+          "name": "GET /events?text=&rangeStart=&rangeEnd=",
+          "request": { "method": "GET", "url": "{{baseUrlMain}}/events?text={{q}}&from=0&size=10&rangeStart={{start}}&rangeEnd={{end}}" },
+          "event": [{ "listen":"test","script":{"exec":["pm.test('200',()=> pm.response.code===200);"]}}]
+        },
+        {
+          "name": "GET /events/{eventId}",
+          "request": { "method": "GET", "url": "{{baseUrlMain}}/events/{{eventId}}" },
+          "event": [{ "listen":"test","script":{"exec":["pm.test('200/404',()=>[200,404].includes(pm.response.code));"]}}]
+        }
+      ]
+    },
+
+    {
+      "name": "Stats Service",
+      "item": [
+        {
+          "name": "POST /hit",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrlStats}}/hit",
+            "body": { "mode": "raw", "raw":
+            "{\n  \"app\": \"ewm-main-service\",\n  \"uri\": \"/events/{{eventId}}\",\n  \"ip\": \"127.0.0.1\",\n  \"timestamp\": \"{{start}}\"\n}" }
+          },
+          "event": [{ "listen":"test","script":{"exec":["pm.test('201/200',()=>[200,201].includes(pm.response.code));"]}}]
+        },
+        {
+          "name": "GET /stats",
           "request": { "method": "GET", "url": "{{baseUrlStats}}/stats?start={{start}}&end={{end}}&unique=false" },
-          "event": [ { "listen": "test", "script": { "exec": [
-            "pm.test('200', ()=> pm.response.code===200);"
-          ]}} ]
+          "event": [{ "listen":"test","script":{"exec":["pm.test('200',()=> pm.response.code===200);"]}}]
         }
       ]
     }
