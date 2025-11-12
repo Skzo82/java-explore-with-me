@@ -9,7 +9,6 @@ import ru.practicum.main.service.ParticipationRequestService;
 
 import java.util.List;
 
-/* # Приватные эндпоинты заявок на участие текущего пользователя */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/users/{userId}/requests")
@@ -18,25 +17,23 @@ public class ParticipationRequestController {
 
     private final ParticipationRequestService service;
 
-    /* # Получить все свои заявки */
-    @GetMapping
-    public List<ParticipationRequestDto> findAll(@PathVariable @Positive long userId) {
-        return service.findAll(userId);
-    }
-
-    /* # Добавить заявку на участие в событии
-       Требуем обязательный query param eventId -> при отсутствии вернётся 400 */
+    // POST /users/{userId}/requests?eventId=...
     @PostMapping
-    @ResponseStatus(org.springframework.http.HttpStatus.CREATED)
-    public ParticipationRequestDto create(@PathVariable @Positive long userId,
+    public ParticipationRequestDto create(@PathVariable @Positive Long userId,
                                           @RequestParam("eventId") @Positive Long eventId) {
         return service.create(userId, eventId);
     }
 
-    /* # Отменить свою заявку — вернуть JSON dto, не text/plain */
+    // GET /users/{userId}/requests
+    @GetMapping
+    public List<ParticipationRequestDto> findAll(@PathVariable @Positive Long userId) {
+        return service.findAll(userId);
+    }
+
+    // PATCH /users/{userId}/requests/{requestId}/cancel
     @PatchMapping("/{requestId}/cancel")
-    public ParticipationRequestDto cancel(@PathVariable @Positive long userId,
-                                          @PathVariable @Positive long requestId) {
+    public ParticipationRequestDto cancel(@PathVariable @Positive Long userId,
+                                          @PathVariable @Positive Long requestId) {
         return service.cancel(userId, requestId);
     }
 }
