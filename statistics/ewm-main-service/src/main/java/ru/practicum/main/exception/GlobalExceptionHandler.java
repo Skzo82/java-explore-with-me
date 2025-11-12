@@ -3,11 +3,15 @@ package ru.practicum.main.exception;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 
+/* # Глобальный обработчик исключений: корректные коды вместо 500 */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -23,7 +27,7 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
-    /* # 409: конфликт бизнес-правил */
+    /* # 409: конфликт/уникальность/бизнес-правила */
     @ExceptionHandler({ConflictException.class, DataIntegrityViolationException.class})
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handleConflict(RuntimeException ex) {
@@ -35,8 +39,15 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
-    /* # 400: ошибки валидации (body/params) */
-    @ExceptionHandler({MethodArgumentNotValidException.class, ConstraintViolationException.class, IllegalArgumentException.class})
+    /* # 400: ошибки валидации и некорректные параметры/тела */
+    @ExceptionHandler({
+            MethodArgumentNotValidException.class,
+            ConstraintViolationException.class,
+            HttpMessageNotReadableException.class,
+            MissingServletRequestParameterException.class,
+            MethodArgumentTypeMismatchException.class,
+            IllegalArgumentException.class
+    })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleBadRequest(Exception ex) {
         return ApiError.builder()
@@ -47,7 +58,7 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
-    /* # 500: прочие ошибки */
+    /* # 500: прочие неожиданные ошибки */
     @ExceptionHandler(Throwable.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiError handleOthers(Throwable ex) {

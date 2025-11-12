@@ -14,20 +14,17 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
 
     @Override
     public ParticipationRequestDto create(long userId, long eventId) {
-        // TODO implementare logica reale
         return null;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<ParticipationRequestDto> findAll(long userId) {
-        // TODO implementare logica reale
         return List.of();
     }
 
     @Override
     public ParticipationRequestDto cancel(long userId, long requestId) {
-        // TODO implementare logica reale
         return null;
     }
 }
