@@ -13,6 +13,6 @@ import lombok.*;
 public class NewCategoryDto {
 
     @NotBlank
-    @Size(max = 128)
+    @Size(max = 50)
     private String name; // # имя категории
 }

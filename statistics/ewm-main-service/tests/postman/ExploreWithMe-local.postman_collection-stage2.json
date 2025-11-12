@@ -1,0 +1,291 @@
+{
+  "info": {
+    "name": "ExploreWithMe – Main & Stats (local)",
+    "_postman_id": "c7f6097e-0a40-4a33-9b4b-ewm-collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Collezione completa per EWM (этап 2). Usa l'environment 'ExploreWithMe – local'."
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Main /actuator/health",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrlMain}}/actuator/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.code === 200);",
+                  "const b = pm.response.json();",
+                  "pm.test('UP', () => (b.status||'').toUpperCase()==='UP');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Stats /actuator/health",
+          "request": { "method": "GET", "url": "{{baseUrlStats}}/actuator/health" },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.code === 200);",
+                  "const b = pm.response.json();",
+                  "pm.test('UP', () => (b.status||'').toUpperCase()==='UP');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Admin · Users",
+      "item": [
+        {
+          "name": "Create user (idempotent by timestamp)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrlMain}}/admin/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"name\": \"{{userName}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.environment.set('timestamp', Date.now());",
+                  "pm.environment.set('userEmail', `user${pm.environment.get('timestamp')}@example.com`);",
+                  "pm.environment.set('userName', `User ${pm.environment.get('timestamp')}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created', ()=> [200,201].includes(pm.response.code));",
+                  "const b = pm.response.json();",
+                  "pm.environment.set('userId', b.id);",
+                  "pm.test('saved userId', ()=> !!pm.environment.get('userId'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List users",
+          "request": { "method": "GET", "url": "{{baseUrlMain}}/admin/users?from=0&size=50" },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [ "pm.test('200 OK', ()=> pm.response.code===200);" ] }
+            }
+          ]
+        },
+        {
+          "name": "Delete user",
+          "request": { "method": "DELETE", "url": "{{baseUrlMain}}/admin/users/{{userId}}" },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [ "pm.test('204/200', ()=> [200,204].includes(pm.response.code));" ] }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "name": "Admin · Categories",
+      "item": [
+        {
+          "name": "Create category (idempotent by timestamp)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrlMain}}/admin/categories",
+            "body": { "mode": "raw", "raw": "{ \"name\": \"{{categoryName}}\" }" }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.environment.set('timestamp', Date.now());",
+                  "pm.environment.set('categoryName', `Mostre ${pm.environment.get('timestamp')}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201/200', ()=> [200,201].includes(pm.response.code));",
+                  "const b = pm.response.json();",
+                  "pm.environment.set('categoryId', b.id);",
+                  "pm.test('saved categoryId', ()=> !!pm.environment.get('categoryId'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Public list categories",
+          "request": { "method": "GET", "url": "{{baseUrlMain}}/categories?from=0&size=50" },
+          "event": [{ "listen": "test", "script": { "exec": [ "pm.test('200', ()=> pm.response.code===200);" ] } }]
+        },
+        {
+          "name": "Patch category",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrlMain}}/admin/categories/{{categoryId}}",
+            "body": { "mode": "raw", "raw": "{ \"name\": \"Mostre mod {{timestamp}}\" }" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [ "pm.test('200', ()=> pm.response.code===200);" ] } }]
+        },
+        {
+          "name": "Delete category",
+          "request": { "method": "DELETE", "url": "{{baseUrlMain}}/admin/categories/{{categoryId}}" },
+          "event": [{ "listen": "test", "script": { "exec": [ "pm.test('200/204', ()=> [200,204].includes(pm.response.code));" ] } }]
+        }
+      ]
+    },
+
+    {
+      "name": "Private · Events (author)",
+      "item": [
+        {
+          "name": "Create event (PENDING)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrlMain}}/users/{{userId}}/events",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"annotation\": \"Mostra illustrata molto lunga...\",\n  \"description\": \"Descrizione ricca...\",\n  \"eventDate\": \"{{$isoTimestamp}}\",\n  \"location\": { \"lat\": 45.46, \"lon\": 9.19 },\n  \"paid\": false,\n  \"participantLimit\": 0,\n  \"requestModeration\": true,\n  \"title\": \"Mostra del secolo\",\n  \"category\": {{categoryId}}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// eventDate >= now + 3h",
+                  "const d = new Date(Date.now()+3*60*60*1000).toISOString().replace('T',' ').substring(0,19);",
+                  "pm.variables.set('$isoTimestamp', d);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201/200', ()=> [200,201].includes(pm.response.code));",
+                  "const b = pm.response.json();",
+                  "pm.environment.set('eventId', b.id);",
+                  "pm.test('state is PENDING or PUBLISHED', ()=> ['PENDING','PUBLISHED'].includes((b.state||'').toUpperCase()));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My events (list)",
+          "request": { "method": "GET", "url": "{{baseUrlMain}}/users/{{userId}}/events?from=0&size=10" },
+          "event": [{ "listen": "test", "script": { "exec": [ "pm.test('200', ()=> pm.response.code===200);" ] } }]
+        },
+        {
+          "name": "Cancel my event",
+          "request": { "method": "PATCH", "url": "{{baseUrlMain}}/users/{{userId}}/events/{{eventId}}/cancel" },
+          "event": [{ "listen": "test", "script": { "exec": [ "pm.test('200', ()=> pm.response.code===200);" ] } }]
+        }
+      ]
+    },
+
+    {
+      "name": "Admin · Events",
+      "item": [
+        {
+          "name": "Publish event",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrlMain}}/admin/events/{{eventId}}",
+            "body": { "mode": "raw", "raw": "{ \"stateAction\": \"PUBLISH_EVENT\" }" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [ "pm.test('200', ()=> pm.response.code===200);" ] } }]
+        },
+        {
+          "name": "Admin search events (by user/range)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrlMain}}/admin/events?users={{userId}}&from=0&size=10&rangeStart={{start}}&rangeEnd={{end}}"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [ "pm.test('200', ()=> pm.response.code===200);" ] } }]
+        }
+      ]
+    },
+
+    {
+      "name": "Public · Events",
+      "item": [
+        {
+          "name": "Public search (by text + date range)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrlMain}}/events?text={{q}}&from=0&size=10&rangeStart={{start}}&rangeEnd={{end}}"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [ "pm.test('200', ()=> pm.response.code===200);" ] } }]
+        },
+        {
+          "name": "Public detail by id",
+          "request": { "method": "GET", "url": "{{baseUrlMain}}/events/{{eventId}}" },
+          "event": [{ "listen": "test", "script": { "exec": [ "pm.test('200', ()=> pm.response.code===200);" ] } }]
+        }
+      ]
+    },
+
+    {
+      "name": "Stats Service",
+      "item": [
+        {
+          "name": "Send hit",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrlStats}}/hit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"app\": \"ewm-main-service\",\n  \"uri\": \"/events/{{eventId}}\",\n  \"ip\": \"127.0.0.1\",\n  \"timestamp\": \"{{start}}\"\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [ "pm.test('201/200', ()=> [200,201].includes(pm.response.code));" ] } }]
+        },
+        {
+          "name": "Get stats (non unique)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrlStats}}/stats?start={{start}}&end={{end}}&unique=false"
+          },
+          "event": [{ "listen": "test", "script": { "exec": [ "pm.test('200', ()=> pm.response.code===200);" ] } }]
+        }
+      ]
+    }
+  ]
+}

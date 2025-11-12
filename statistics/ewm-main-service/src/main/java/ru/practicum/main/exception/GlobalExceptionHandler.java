@@ -1,5 +1,6 @@
 package ru.practicum.main.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -7,11 +8,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
-/* # Глобальный обработчик ошибок: приводит все к ожидаемым кодам */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /* # 404 Not Found */
+    /* # 404: не найдено */
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiError handleNotFound(NotFoundException ex) {
@@ -23,8 +23,8 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
-    /* # 409 Conflict: нарушения статуса/состояния и уникальностей */
-    @ExceptionHandler({IllegalStateException.class, DataIntegrityViolationException.class})
+    /* # 409: конфликт бизнес-правил */
+    @ExceptionHandler({ConflictException.class, DataIntegrityViolationException.class})
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handleConflict(RuntimeException ex) {
         return ApiError.builder()
@@ -35,25 +35,25 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
-    /* # 400 Bad Request: валидация/некорректные аргументы */
-    @ExceptionHandler({IllegalArgumentException.class, MethodArgumentNotValidException.class})
+    /* # 400: ошибки валидации (body/params) */
+    @ExceptionHandler({MethodArgumentNotValidException.class, ConstraintViolationException.class, IllegalArgumentException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleBadRequest(Exception ex) {
         return ApiError.builder()
                 .status(HttpStatus.BAD_REQUEST.name())
-                .reason("Bad request")
+                .reason("Bad Request")
                 .message(ex.getMessage())
                 .timestamp(LocalDateTime.now())
                 .build();
     }
 
-    /* # 500: на всякий случай — чтобы Postman всегда получал JSON */
-    @ExceptionHandler(Exception.class)
+    /* # 500: прочие ошибки */
+    @ExceptionHandler(Throwable.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ApiError handleAny(Exception ex) {
+    public ApiError handleOthers(Throwable ex) {
         return ApiError.builder()
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.name())
-                .reason("Internal error")
+                .reason("Internal Server Error")
                 .message(ex.getMessage())
                 .timestamp(LocalDateTime.now())
                 .build();
