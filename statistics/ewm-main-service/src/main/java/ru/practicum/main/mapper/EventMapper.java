@@ -14,9 +14,11 @@ import ru.practicum.main.model.User;
 
 import java.time.LocalDateTime;
 
+/* # Маппер для событий */
 @UtilityClass
 public class EventMapper {
 
+    /* # Создание новой доменной сущности из DTO */
     public static Event toNew(NewEventDto dto, User initiator, Category category) {
         Event e = new Event();
         e.setAnnotation(dto.getAnnotation());
@@ -35,6 +37,7 @@ public class EventMapper {
         return e;
     }
 
+    /* # Короткое представление */
     public static EventShortDto toShort(Event e) {
         return EventShortDto.builder()
                 .id(e.getId())
@@ -47,6 +50,7 @@ public class EventMapper {
                 .build();
     }
 
+    /* # Полное представление (CategoryDto + UserShortDto) */
     public static EventFullDto toFull(Event e) {
         LocationDto loc = null;
         if (e.getLocation() != null) {
@@ -56,8 +60,21 @@ public class EventMapper {
                     .build();
         }
 
-        CategoryDto categoryDto = CategoryMapper.toDto(e.getCategory());
-        UserShortDto initiatorDto = UserMapper.toShortDto(e.getInitiator());
+        CategoryDto categoryDto = null;
+        if (e.getCategory() != null) {
+            categoryDto = CategoryDto.builder()
+                    .id(e.getCategory().getId())
+                    .name(e.getCategory().getName())
+                    .build();
+        }
+
+        UserShortDto initiatorDto = null;
+        if (e.getInitiator() != null) {
+            initiatorDto = UserShortDto.builder()
+                    .id(e.getInitiator().getId())
+                    .name(e.getInitiator().getName())
+                    .build();
+        }
 
         return EventFullDto.builder()
                 .id(e.getId())
@@ -71,8 +88,8 @@ public class EventMapper {
                 .requestModeration(e.isRequestModeration())
                 .title(e.getTitle())
                 .state(e.getState() != null ? e.getState().name() : null)
-                .initiator(initiatorDto)
                 .category(categoryDto)
+                .initiator(initiatorDto)
                 .views(e.getViews())
                 .location(loc)
                 .build();

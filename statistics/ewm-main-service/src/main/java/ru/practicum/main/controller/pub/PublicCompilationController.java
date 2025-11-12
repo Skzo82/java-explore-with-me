@@ -12,6 +12,7 @@ import ru.practicum.main.service.CompilationService;
 
 import java.util.List;
 
+/* # Публичные эндпоинты для подборок (компиляций) */
 @RestController
 @RequestMapping("/compilations")
 @RequiredArgsConstructor
