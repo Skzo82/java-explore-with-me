@@ -4,7 +4,7 @@ WORKDIR /work
 
 COPY ./pom.xml ./pom.xml
 COPY ./statistics ./statistics
-COPY .mvn .mvn
+COPY ./maven/settings.xml /root/.m2/settings.xml
 
 RUN mvn -B -q -U dependency:go-offline
 
