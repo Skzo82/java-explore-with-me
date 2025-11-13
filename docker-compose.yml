@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db-stats:
     image: postgres:16
@@ -53,7 +51,6 @@ services:
     volumes:
       - db-main-data:/var/lib/postgresql/data
 
-  # ⬇️ RINOMINATO: main-service  →  ewm-service
   ewm-service:
     build:
       context: .

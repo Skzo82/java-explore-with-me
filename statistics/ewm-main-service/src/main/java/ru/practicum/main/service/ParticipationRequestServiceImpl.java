@@ -13,8 +13,7 @@ import ru.practicum.main.model.RequestStatus;
 import ru.practicum.main.model.User;
 import ru.practicum.main.repository.EventRepository;
 import ru.practicum.main.repository.ParticipationRequestRepository;
-import ru.practicum.main.repository
-        .UserRepository;
+import ru.practicum.main.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;

@@ -24,9 +24,11 @@ public interface CompilationService {
 
     /* # Управление событиями внутри подборки */
     void addEvent(long compId, long eventId);
+
     void removeEvent(long compId, long eventId);
 
     /* # Публичные методы */
     List<CompilationDto> findAllPublic(Boolean pinned, Pageable pageable);
+
     CompilationDto getByIdPublic(long compId);
 }

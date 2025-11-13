@@ -57,8 +57,10 @@ public class StatsServiceImpl implements StatsService {
 
     private static LocalDateTime parseTimestamp(String ts) {
         for (DateTimeFormatter f : TS_FORMATS) {
-            try { return LocalDateTime.parse(ts, f); }
-            catch (Exception ignored) {}
+            try {
+                return LocalDateTime.parse(ts, f);
+            } catch (Exception ignored) {
+            }
         }
         throw new IllegalArgumentException("Invalid timestamp format: " + ts);
     }

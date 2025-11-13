@@ -1,3 +1,4 @@
+<!-- # Корневой POM для мульти-модуля ExploreWithMe -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -8,6 +9,7 @@
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
+    <!-- # Модули проекта -->
     <modules>
         <module>statistics/ewm-stats-dto</module>
         <module>statistics/ewm-stats-client</module>
@@ -15,13 +17,18 @@
         <module>statistics/ewm-main-service</module>
     </modules>
 
+    <!-- # Общие свойства сборки -->
     <properties>
         <java.version>21</java.version>
         <spring-boot.version>3.3.4</spring-boot.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
+        <!-- # Кодировки для сборки/отчётов -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
+    <!-- # Управление версиями зависимостей Spring Boot -->
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -35,6 +42,7 @@
     </dependencyManagement>
 
     <build>
+        <!-- # Версии плагинов по умолчанию -->
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -45,6 +53,7 @@
             </plugins>
         </pluginManagement>
 
+        <!-- # Плагины сборки (применяются всегда) -->
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -65,4 +74,44 @@
             </plugin>
         </plugins>
     </build>
+
+    <!-- # Профили: CI вызывает 'mvn install -P check' -->
+    <profiles>
+        <profile>
+            <id>check</id>
+            <build>
+                <plugins>
+                    <!-- # Проверка стиля кода (конфиги в корне: checkstyle.xml/suppressions.xml) -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-checkstyle-plugin</artifactId>
+                        <version>3.6.0</version>
+                        <!-- # Совместимая с Java 21 версия Checkstyle -->
+                        <dependencies>
+                            <dependency>
+                                <groupId>com.puppycrawl.tools</groupId>
+                                <artifactId>checkstyle</artifactId>
+                                <version>10.17.0</version>
+                            </dependency>
+                        </dependencies>
+                        <configuration>
+                            <configLocation>checkstyle.xml</configLocation>
+                            <suppressionsLocation>suppressions.xml</suppressionsLocation>
+                            <consoleOutput>true</consoleOutput>
+                            <failOnViolation>true</failOnViolation>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>validate-with-checkstyle</id>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

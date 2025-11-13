@@ -2,10 +2,7 @@ package ru.practicum.main.controller.admin;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.main.dto.compilation.CompilationDto;
@@ -13,7 +10,6 @@ import ru.practicum.main.dto.compilation.NewCompilationDto;
 import ru.practicum.main.dto.compilation.UpdateCompilationRequest;
 import ru.practicum.main.service.CompilationService;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/admin/compilations")
