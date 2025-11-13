@@ -1,7 +1,5 @@
 package ru.practicum.main.controller;
 
-import java.util.List;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -17,6 +15,8 @@ import ru.practicum.main.dto.event.NewEventDto;
 import ru.practicum.main.dto.event.UpdateEventUserRequest;
 import ru.practicum.main.service.EventService;
 
+import java.util.List;
+
 /* # Приватные эндпоинты владельца событий */
 @RestController
 @RequiredArgsConstructor
@@ -26,11 +26,11 @@ public class PrivateEventsController {
 
     private final EventService service;
 
+    /* # Создание события пользователем -> 201 */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public EventFullDto create(@PathVariable Long userId,
                                @Valid @RequestBody NewEventDto dto) {
-        /* # Создание события пользователем */
         return service.create(userId, dto);
     }
 
@@ -46,22 +46,20 @@ public class PrivateEventsController {
     @GetMapping("/{eventId}")
     public EventFullDto myEvent(@PathVariable Long userId,
                                 @PathVariable Long eventId) {
-        /* # Получить своё событие по id */
         return service.getUserEvent(userId, eventId);
     }
 
+    /* # Обновление события владельцем: включаем валидацию тела -> 400 при нарушениях */
     @PatchMapping("/{eventId}")
     public EventFullDto update(@PathVariable Long userId,
                                @PathVariable Long eventId,
-                               @RequestBody UpdateEventUserRequest dto) {
-        /* # Обновление события владельцем */
+                               @Valid @RequestBody UpdateEventUserRequest dto) {
         return service.updateByUser(userId, eventId, dto);
     }
 
     @PatchMapping("/{eventId}/cancel")
     public EventFullDto cancel(@PathVariable Long userId,
                                @PathVariable Long eventId) {
-        /* # Отмена события владельцем (без тела запроса) */
         return service.cancelByUser(userId, eventId);
     }
 }

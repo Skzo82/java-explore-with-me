@@ -30,7 +30,7 @@ public class CompilationServiceImpl implements CompilationService {
     @Override
     @Transactional
     public CompilationDto create(NewCompilationDto dto) {
-        Set<Event> events = dto.getEvents() == null || dto.getEvents().isEmpty()
+        Set<Event> events = (dto.getEvents() == null || dto.getEvents().isEmpty())
                 ? new LinkedHashSet<>()
                 : new LinkedHashSet<>(eventRepository.findAllById(dto.getEvents()));
 
@@ -38,7 +38,7 @@ public class CompilationServiceImpl implements CompilationService {
         return CompilationMapper.toDto(saved);
     }
 
-    /* UPDATE parziale */
+    /* UPDATE (частичный) */
     @Override
     @Transactional
     public CompilationDto update(long compId, UpdateCompilationRequest dto) {

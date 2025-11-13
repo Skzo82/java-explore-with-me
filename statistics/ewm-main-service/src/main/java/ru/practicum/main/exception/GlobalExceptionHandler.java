@@ -13,7 +13,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 
-/* # Глобальный обработчик исключений: корректные коды вместо 500 */
+/* # Глобальный обработчик исключений: возвращаем корректные коды вместо 500 */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -29,7 +29,7 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
-    /* # 404: неизвестный путь (нет обработчика/ресурса) */
+    /* # 404: неизвестный путь/ресурс (при соответствующей настройке MVC) */
     @ExceptionHandler(NoResourceFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiError handleNoResource(NoResourceFoundException ex) {
@@ -53,8 +53,12 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
-    /* # 409: конфликт/уникальность/бизнес-правила */
-    @ExceptionHandler({ConflictException.class, DataIntegrityViolationException.class})
+    /* # 409: конфликт уникальности/состояния/бизнес-правила */
+    @ExceptionHandler({
+            ConflictException.class,
+            DataIntegrityViolationException.class,
+            IllegalStateException.class   // # добавлено: используем для бизнес-конфликтов (например, publish из non-PENDING)
+    })
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handleConflict(RuntimeException ex) {
         return ApiError.builder()
@@ -84,6 +88,7 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
+    /* # 500: всё прочее — как внутренняя ошибка */
     @ExceptionHandler(Throwable.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiError handleOthers(Throwable ex) {
