@@ -13,7 +13,8 @@ import java.time.LocalDateTime;
 @Table(name = "events")
 public class Event {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, length = 2000)
@@ -62,6 +63,11 @@ public class Event {
     @Column(nullable = false)
     private String title;
 
+    /* # Количество подтверждённых заявок — нужно тестам Postman */
+    @Column(name = "confirmed_requests", nullable = false)
+    @Builder.Default
+    private Integer confirmedRequests = 0;
+
     @Column(nullable = false)
     @Builder.Default
     private Integer views = 0;
@@ -73,6 +79,7 @@ public class Event {
         if (paid == null) paid = false;
         if (requestModeration == null) requestModeration = true;
         if (participantLimit == null) participantLimit = 0;
+        if (confirmedRequests == null) confirmedRequests = 0;
         if (views == null) views = 0;
     }
 }

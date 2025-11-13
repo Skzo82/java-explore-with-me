@@ -1,25 +1,31 @@
 package ru.practicum.main.dto.event;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
+import ru.practicum.main.dto.category.CategoryDto;
+import ru.practicum.main.dto.user.UserShortDto;
 
 import java.time.LocalDateTime;
 
-/* # Краткое представление события */
-@Data
+/* # Краткое представление события (используется в списках) */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class EventShortDto {
-    private Long id;
-    private String annotation;
-    private String title;
+
+    private Long id;                 // идентификатор
+    private String annotation;       // краткое описание
+    private String title;            // заголовок
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime eventDate;
+    private LocalDateTime eventDate; // дата события
 
-    private Boolean paid;
-    private Integer views;
+    private Boolean paid;            // платное ли событие
+    private Integer confirmedRequests; // подтверждённые заявки
+    private Integer views;           // просмотры
 
-    /* # Идентификатор категории — используется в маппере EventMapper.toShort() */
-    private Long categoryId;
+    private CategoryDto category;    // категория (DTO) — по спецификации
+    private UserShortDto initiator;  // инициатор (DTO) — по спецификации
 }

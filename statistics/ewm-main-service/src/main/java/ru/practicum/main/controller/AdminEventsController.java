@@ -44,8 +44,10 @@ public class AdminEventsController {
 
     /* # Обновление события администратором */
     @PatchMapping("/{eventId}")
-    public EventFullDto updateByAdmin(@PathVariable Long eventId,
-                                      @Valid @RequestBody UpdateEventAdminRequest dto) {
+    public EventFullDto updateByAdmin(
+            @PathVariable Long eventId,
+            @Valid @RequestBody UpdateEventAdminRequest dto
+    ) {
         return service.updateByAdmin(eventId, dto);
     }
 }

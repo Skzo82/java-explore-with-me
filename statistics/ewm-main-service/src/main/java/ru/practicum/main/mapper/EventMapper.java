@@ -31,14 +31,35 @@ public class EventMapper {
     }
 
     public static EventShortDto toShort(Event e) {
+        CategoryDto categoryDto = null;
+        if (e.getCategory() != null) {
+            categoryDto = CategoryDto.builder()
+                    .id(e.getCategory().getId())
+                    .name(e.getCategory().getName())
+                    .build();
+        }
+
+        UserShortDto initiatorDto = null;
+        if (e.getInitiator() != null) {
+            initiatorDto = UserShortDto.builder()
+                    .id(e.getInitiator().getId())
+                    .name(e.getInitiator().getName())
+                    .build();
+        }
+
+        Integer confirmed = e.getConfirmedRequests();
+        if (confirmed == null) confirmed = 0; // безопасно по умолчанию
+
         return EventShortDto.builder()
                 .id(e.getId())
                 .annotation(e.getAnnotation())
                 .title(e.getTitle())
                 .eventDate(e.getEventDate())
                 .paid(Boolean.TRUE.equals(e.getPaid()))
+                .confirmedRequests(confirmed)
                 .views(e.getViews())
-                .categoryId(e.getCategory() != null ? e.getCategory().getId() : null)
+                .category(categoryDto)
+                .initiator(initiatorDto)
                 .build();
     }
 
@@ -67,6 +88,9 @@ public class EventMapper {
                     .build();
         }
 
+        Integer confirmed = e.getConfirmedRequests();
+        if (confirmed == null) confirmed = 0;
+
         return EventFullDto.builder()
                 .id(e.getId())
                 .annotation(e.getAnnotation())
@@ -81,6 +105,7 @@ public class EventMapper {
                 .state(e.getState() != null ? e.getState().name() : null)
                 .category(categoryDto)
                 .initiator(initiatorDto)
+                .confirmedRequests(confirmed)   // <-- важно: теперь заполняется
                 .views(e.getViews())
                 .location(loc)
                 .build();
