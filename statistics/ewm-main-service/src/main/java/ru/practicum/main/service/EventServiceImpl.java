@@ -88,14 +88,19 @@ public class EventServiceImpl implements EventService {
                                                Boolean onlyAvailable,
                                                String sort,
                                                Pageable pageable) {
-        // NOTE: onlyAvailable + sort — логика может быть добавлена позже
+
+        String textSafe = (text == null || text.isBlank()) ? null : text;
+        boolean catsEmpty = (categories == null || categories.isEmpty());
+
         return eventRepo.searchPublic(
-                        text,
-                        (categories == null || categories.isEmpty()) ? null : categories,
+                        textSafe,
+                        catsEmpty ? List.of() : categories,
+                        catsEmpty,
                         paid,
                         rangeStart,
                         rangeEnd,
-                        pageable)
+                        pageable
+                )
                 .map(EventMapper::toShort)
                 .getContent();
     }
