@@ -1,5 +1,8 @@
 package ru.practicum.main.controller;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
@@ -12,9 +15,6 @@ import ru.practicum.main.dto.event.EventFullDto;
 import ru.practicum.main.dto.event.EventShortDto;
 import ru.practicum.main.service.EventService;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 /* # Публичные эндпоинты событий */
 @RestController
 @RequestMapping
@@ -24,7 +24,7 @@ public class PublicEventsController {
 
     private final EventService eventService;
 
-    /* # Публичный поиск событий (с поддержкой from/size и формата дат из ТЗ) */
+    /* # Публичный поиск событий (from/size и формат дат из ТЗ) */
     @GetMapping("/events")
     public List<EventShortDto> searchPublic(
             @RequestParam(required = false) String text,
@@ -39,12 +39,11 @@ public class PublicEventsController {
             @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
             @RequestParam(defaultValue = "10") @Positive Integer size
     ) {
-        /* # Преобразуем from/size в Pageable */
         Pageable pageable = PageRequest.of(from / size, size);
         return eventService.getPublicEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, pageable);
     }
 
-    /* # Публичное получение опубликованного события по id */
+    /* # Публичное получение опубликованного события по id (увеличивает views) */
     @GetMapping("/events/{eventId}")
     public EventFullDto getPublicById(@PathVariable Long eventId) {
         return eventService.getPublishedEventById(eventId);
