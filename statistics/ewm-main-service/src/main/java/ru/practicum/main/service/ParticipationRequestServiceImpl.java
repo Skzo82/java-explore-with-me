@@ -17,6 +17,7 @@ import ru.practicum.main.repository
         .UserRepository;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -57,7 +58,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         ParticipationRequest req = ParticipationRequest.builder()
                 .event(event)
                 .requester(user)
-                .created(LocalDateTime.now())
+                .created(LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS))
                 .status(autoConfirm ? RequestStatus.CONFIRMED : RequestStatus.PENDING)
                 .build();
 
