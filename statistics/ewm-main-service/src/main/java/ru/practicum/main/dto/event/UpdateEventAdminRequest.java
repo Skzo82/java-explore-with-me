@@ -1,11 +1,14 @@
 package ru.practicum.main.dto.event;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDateTime;
 
+/* # DTO частичного обновления события администратором.
+   # Все поля опциональны; @Size не требует @NotNull (null допустим). */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,10 +22,14 @@ public class UpdateEventAdminRequest {
     @Size(min = 20, max = 7000)
     private String description;
 
+    /* # Формат даты строго по ТЗ */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
 
+    /* # id категории (опционально) */
     private Long category;
 
+    /* # Координаты (опционально целиком) */
     private LocationDto location;
 
     private Boolean paid;
@@ -35,6 +42,10 @@ public class UpdateEventAdminRequest {
     @Size(min = 3, max = 120)
     private String title;
 
-    /* "PUBLISH_EVENT" | "REJECT_EVENT" */
-    private String stateAction;
+    /* # Действие администратора: PUBLISH_EVENT | REJECT_EVENT */
+    private AdminStateAction stateAction;
+
+    public enum AdminStateAction {
+        PUBLISH_EVENT, REJECT_EVENT
+    }
 }

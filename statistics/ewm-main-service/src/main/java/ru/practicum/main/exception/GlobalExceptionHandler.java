@@ -57,7 +57,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             ConflictException.class,
             DataIntegrityViolationException.class,
-            IllegalStateException.class   // # добавлено: используем для бизнес-конфликтов (например, publish из non-PENDING)
+            IllegalStateException.class // # бизнес-конфликты (напр., publish из non-PENDING)
     })
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handleConflict(RuntimeException ex) {

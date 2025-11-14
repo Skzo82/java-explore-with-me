@@ -49,11 +49,11 @@ public class PrivateEventsController {
         return service.getUserEvent(userId, eventId);
     }
 
-    /* # Обновление события владельцем: включаем валидацию тела -> 400 при нарушениях */
+    /* # Частичное обновление: без @Valid, чтобы null-поля не давали 400 */
     @PatchMapping("/{eventId}")
     public EventFullDto update(@PathVariable Long userId,
                                @PathVariable Long eventId,
-                               @Valid @RequestBody UpdateEventUserRequest dto) {
+                               @RequestBody UpdateEventUserRequest dto) {
         return service.updateByUser(userId, eventId, dto);
     }
 
