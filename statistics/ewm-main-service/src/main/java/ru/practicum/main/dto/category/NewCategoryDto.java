@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
-/* # DTO для создания категории */
+/* # DTO создания категории */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -12,7 +12,8 @@ import lombok.*;
 @Builder
 public class NewCategoryDto {
 
+    /* # Имя категории: обязательно, не пустое, до 50 символов */
     @NotBlank
-    @Size(max = 50)
-    private String name; // # имя категории
+    @Size(min = 1, max = 50)
+    private String name;
 }

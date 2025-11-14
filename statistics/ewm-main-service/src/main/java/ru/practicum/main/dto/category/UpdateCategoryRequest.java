@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
-/* # DTO для частичного обновления категории (PATCH) */
+/* # DTO частичного обновления категории (PATCH) */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -12,8 +12,8 @@ import lombok.*;
 @Builder
 public class UpdateCategoryRequest {
 
-    /* # Имя категории может быть обновлено, не пустое, до 128 символов */
+    /* # Имя категории обязательно при PATCH, до 50 символов */
     @NotBlank
-    @Size(max = 128)
+    @Size(min = 1, max = 50)
     private String name;
 }

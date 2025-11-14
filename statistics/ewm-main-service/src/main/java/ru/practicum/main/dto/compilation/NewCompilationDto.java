@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.util.Set;
 
+/* # DTO создания подборки событий */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,13 +14,15 @@ import java.util.Set;
 @Builder
 public class NewCompilationDto {
 
+    /* # Заголовок обязателен и не пустой (до 50) */
     @NotBlank
-    @Size(max = 50)
+    @Size(min = 1, max = 50)
     private String title;
 
+    /* # Признак закрепления (по умолчанию false) */
     @Builder.Default
     private Boolean pinned = false;
 
-    @Builder.Default
-    private Set<Long> events = Set.of();
+    /* # Набор id событий (не обязателен) */
+    private Set<Long> events;
 }

@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.util.Set;
 
+/* # DTO частичного обновления подборки */
 @Getter
 @Setter
 @NoArgsConstructor

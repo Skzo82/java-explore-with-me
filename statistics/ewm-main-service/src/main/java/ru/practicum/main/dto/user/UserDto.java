@@ -2,7 +2,7 @@ package ru.practicum.main.dto.user;
 
 import lombok.*;
 
-/* # DTO для ответа по пользователю */
+/* # DTO ответа по пользователю */
 @Getter
 @Setter
 @NoArgsConstructor
