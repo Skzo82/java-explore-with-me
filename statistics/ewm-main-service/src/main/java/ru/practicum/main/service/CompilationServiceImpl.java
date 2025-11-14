@@ -18,6 +18,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+/* # Сервис для работы с подборками */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -26,7 +27,7 @@ public class CompilationServiceImpl implements CompilationService {
     private final CompilationRepository compilationRepository;
     private final EventRepository eventRepository;
 
-    /* CREATE */
+    /* # Создание подборки */
     @Override
     @Transactional
     public CompilationDto create(NewCompilationDto dto) {
@@ -34,11 +35,13 @@ public class CompilationServiceImpl implements CompilationService {
                 ? new LinkedHashSet<>()
                 : new LinkedHashSet<>(eventRepository.findAllById(dto.getEvents()));
 
-        Compilation saved = compilationRepository.save(CompilationMapper.fromNew(dto, events));
+        Compilation saved = compilationRepository.save(
+                CompilationMapper.fromNew(dto, events)
+        );
         return CompilationMapper.toDto(saved);
     }
 
-    /* UPDATE (частичный) */
+    /* # Частичное обновление подборки */
     @Override
     @Transactional
     public CompilationDto update(long compId, UpdateCompilationRequest dto) {
@@ -46,16 +49,19 @@ public class CompilationServiceImpl implements CompilationService {
                 .orElseThrow(() -> new NotFoundException("Compilation not found: " + compId));
 
         Set<Event> newEvents = null;
+
+        /* # Если в PATCH передан список событий — обновляем */
         if (dto.getEvents() != null) {
             newEvents = new LinkedHashSet<>(eventRepository.findAllById(dto.getEvents()));
         }
 
         CompilationMapper.applyUpdate(c, dto, newEvents);
         Compilation updated = compilationRepository.save(c);
+
         return CompilationMapper.toDto(updated);
     }
 
-    /* DELETE */
+    /* # Удаление подборки */
     @Override
     @Transactional
     public void delete(long compId) {
@@ -65,39 +71,43 @@ public class CompilationServiceImpl implements CompilationService {
         compilationRepository.deleteById(compId);
     }
 
-    /* PIN/UNPIN */
+    /* # Установка флага pinned */
     @Override
     @Transactional
     public void setPinned(long compId, boolean pinned) {
         Compilation c = compilationRepository.findById(compId)
                 .orElseThrow(() -> new NotFoundException("Compilation not found: " + compId));
+
         c.setPinned(pinned);
         compilationRepository.save(c);
     }
 
-    /* ADD EVENT */
+    /* # Добавление события в подборку */
     @Override
     @Transactional
     public void addEvent(long compId, long eventId) {
         Compilation c = compilationRepository.findById(compId)
                 .orElseThrow(() -> new NotFoundException("Compilation not found: " + compId));
+
         Event e = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event not found: " + eventId));
+
         c.getEvents().add(e);
         compilationRepository.save(c);
     }
 
-    /* REMOVE EVENT */
+    /* # Удаление события из подборки */
     @Override
     @Transactional
     public void removeEvent(long compId, long eventId) {
         Compilation c = compilationRepository.findById(compId)
                 .orElseThrow(() -> new NotFoundException("Compilation not found: " + compId));
+
         c.getEvents().removeIf(ev -> ev.getId().equals(eventId));
         compilationRepository.save(c);
     }
 
-    /* PUBLIC LIST */
+    /* # Публичный список подборок */
     @Override
     public List<CompilationDto> findAllPublic(Boolean pinned, Pageable pageable) {
         if (pinned == null) {
@@ -105,16 +115,18 @@ public class CompilationServiceImpl implements CompilationService {
                     .map(CompilationMapper::toDto)
                     .getContent();
         }
+
         return compilationRepository.findAllByPinned(pinned, pageable)
                 .map(CompilationMapper::toDto)
                 .getContent();
     }
 
-    /* PUBLIC GET */
+    /* # Публичное получение подборки по id */
     @Override
     public CompilationDto getByIdPublic(long compId) {
         Compilation c = compilationRepository.findById(compId)
                 .orElseThrow(() -> new NotFoundException("Compilation not found: " + compId));
+
         return CompilationMapper.toDto(c);
     }
 }

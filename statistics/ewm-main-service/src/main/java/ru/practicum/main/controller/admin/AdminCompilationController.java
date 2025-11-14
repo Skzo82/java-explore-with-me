@@ -1,11 +1,7 @@
 package ru.practicum.main.controller.admin;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +12,6 @@ import ru.practicum.main.service.CompilationService;
 
 import java.util.List;
 
-/* # Админ-эндпоинты для подборок */
 @RestController
 @RequestMapping("/admin/compilations")
 @RequiredArgsConstructor
@@ -25,33 +20,57 @@ public class AdminCompilationController {
 
     private final CompilationService service;
 
-    /* # Создание подборки (201), поддерживаем /admin/compilations и /admin/compilations/ */
-    @PostMapping({"", "/"})
+    /* CREATE */
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CompilationDto create(@Valid @RequestBody NewCompilationDto dto) {
         return service.create(dto);
     }
 
-    /* # Частичное обновление */
+    /* UPDATE */
     @PatchMapping("/{compId}")
-    public CompilationDto update(@PathVariable long compId,
-                                 @Valid @RequestBody UpdateCompilationRequest dto) {
+    public CompilationDto update(
+            @PathVariable long compId,
+            @Valid @RequestBody UpdateCompilationRequest dto
+    ) {
         return service.update(compId, dto);
     }
 
-    /* # Удаление */
+    /* DELETE compilation */
     @DeleteMapping("/{compId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable long compId) {
+    public void deleteCompilation(@PathVariable long compId) {
         service.delete(compId);
     }
 
-    /* # Список (from/size -> Pageable), тоже поддерживаем оба варианта пути */
-    @GetMapping({"", "/"})
-    public List<CompilationDto> list(@RequestParam(required = false) Boolean pinned,
-                                     @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
-                                     @RequestParam(defaultValue = "10") @Positive Integer size) {
-        Pageable pageable = PageRequest.of(from / size, size);
-        return service.findAllPublic(pinned, pageable);
+    /* ADD EVENT */
+    @PatchMapping("/{compId}/events/{eventId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void addEvent(
+            @PathVariable long compId,
+            @PathVariable long eventId
+    ) {
+        service.addEvent(compId, eventId);
+    }
+
+    /* REMOVE EVENT */
+    @DeleteMapping("/{compId}/events/{eventId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeEvent(
+            @PathVariable long compId,
+            @PathVariable long eventId
+    ) {
+        service.removeEvent(compId, eventId);
+    }
+
+    /* LIST */
+    @GetMapping
+    public List<CompilationDto> list(
+            @RequestParam(required = false) Boolean pinned,
+            @RequestParam(defaultValue = "0") Integer from,
+            @RequestParam(defaultValue = "10") Integer size
+    ) {
+        int page = from / size;
+        return service.findAllPublic(pinned, org.springframework.data.domain.PageRequest.of(page, size));
     }
 }
