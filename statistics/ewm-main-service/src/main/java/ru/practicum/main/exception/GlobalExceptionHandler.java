@@ -13,7 +13,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 
-/* # Глобальный обработчик исключений: возвращаем корректные коды вместо 500 */
+/* # Глобальный обработчик исключений: корректные коды вместо 500 */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -57,7 +57,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             ConflictException.class,
             DataIntegrityViolationException.class,
-            IllegalStateException.class // # бизнес-конфликты (напр., publish из non-PENDING)
+            IllegalStateException.class /* # бизнес-конфликты (напр., publish не из PENDING) */
     })
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handleConflict(RuntimeException ex) {

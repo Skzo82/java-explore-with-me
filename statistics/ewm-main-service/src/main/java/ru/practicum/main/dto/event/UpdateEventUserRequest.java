@@ -7,8 +7,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-/* # DTO частичного обновления события владельцем.
-   # Все поля опциональны; @Size допускает null. */
+/* # Запрос пользователя на частичное обновление события */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,35 +15,38 @@ import java.time.LocalDateTime;
 @Builder
 public class UpdateEventUserRequest {
 
-    /* # Ограничения соответствуют созданию, но поле может быть null */
+    /* # Аннотация: 20..2000 символов */
     @Size(min = 20, max = 2000)
     private String annotation;
 
+    /* # Описание: 20..7000 символов */
     @Size(min = 20, max = 7000)
     private String description;
 
+    /* # Дата события в формате ТЗ */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
 
+    /* # Координаты */
     private LocationDto location;
 
+    /* # Платность */
     private Boolean paid;
 
+    /* # Лимит участников (>= 0) */
     @PositiveOrZero
     private Integer participantLimit;
 
+    /* # Нужна ли модерация заявок */
     private Boolean requestModeration;
 
+    /* # Заголовок: 3..120 символов */
     @Size(min = 3, max = 120)
     private String title;
 
-    /* # id категории (опционально) */
+    /* # Категория */
     private Long category;
 
-    /* # Действие владельца: SEND_TO_REVIEW | CANCEL_REVIEW */
-    private UserStateAction stateAction;
-
-    public enum UserStateAction {
-        SEND_TO_REVIEW, CANCEL_REVIEW
-    }
+    /* # Действие со статусом: SEND_TO_REVIEW | CANCEL_REVIEW */
+    private String stateAction;
 }
