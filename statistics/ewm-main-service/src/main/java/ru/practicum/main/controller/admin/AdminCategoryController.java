@@ -1,8 +1,8 @@
 package ru.practicum.main.controller.admin;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -28,34 +28,32 @@ public class AdminCategoryController {
         this.categories = categories;
     }
 
-    /* # Создание категории -> 201 Created */
+    /* # create -> 201 */
     @PostMapping
     public ResponseEntity<CategoryDto> create(@RequestBody @Valid NewCategoryDto request) {
         CategoryDto created = categories.create(request);
-        return ResponseEntity
-                .created(URI.create("/admin/categories/" + created.getId()))
-                .body(created);
+        return ResponseEntity.created(URI.create("/admin/categories/" + created.getId())).body(created);
     }
 
-    /* # Частичное обновление категории -> 200 OK */
+    /* # patch -> 200 */
     @PatchMapping("/{catId}")
     public CategoryDto update(@PathVariable @Positive long catId,
                               @RequestBody @Valid UpdateCategoryRequest request) {
         return categories.update(catId, request);
     }
 
-    /* # Удаление категории -> 204 No Content */
+    /* # delete -> 204 */
     @DeleteMapping("/{catId}")
     public ResponseEntity<Void> delete(@PathVariable @Positive long catId) {
         categories.delete(catId);
         return ResponseEntity.noContent().build();
     }
 
-    /* # Список категорий -> 200 OK (from/size -> Pageable), size по умолчанию = 10 */
+    /* # list -> 200 (from/size -> Pageable) */
     @GetMapping
-    public List<CategoryDto> list(@RequestParam(defaultValue = "0") @PositiveOrZero int from,
-                                  @RequestParam(defaultValue = "10") @Positive int size) {
-        int page = from / size; // # offset -> page
+    public List<CategoryDto> list(@RequestParam(defaultValue = "0") @Min(0) int from,
+                                  @RequestParam(defaultValue = "10") @Min(1) int size) {
+        int page = from / size;
         Pageable pageable = PageRequest.of(page, size);
         return categories.findAll(pageable);
     }

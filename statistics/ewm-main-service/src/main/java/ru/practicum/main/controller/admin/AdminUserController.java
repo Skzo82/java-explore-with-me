@@ -1,8 +1,8 @@
 package ru.practicum.main.controller.admin;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -27,27 +27,24 @@ public class AdminUserController {
         this.users = users;
     }
 
-    /* # Создание пользователя -> 201 Created */
+    /* # Создание пользователя → 201 */
     @PostMapping
     public ResponseEntity<UserDto> create(@Valid @RequestBody NewUserRequest body) {
         UserDto created = users.create(body);
-        return ResponseEntity
-                .created(URI.create("/admin/users/" + created.getId()))
-                .body(created);
+        return ResponseEntity.created(URI.create("/admin/users/" + created.getId())).body(created);
     }
 
-    /* # Список пользователей (пагинация) -> 200 OK, size по умолчанию = 10 */
+    /* # Получение списка пользователей (пагинация) → 200 */
     @GetMapping
-    public ResponseEntity<List<UserDto>> findAll(
-            @RequestParam(defaultValue = "0") @PositiveOrZero int from,
-            @RequestParam(defaultValue = "10") @Positive int size) {
+    public ResponseEntity<List<UserDto>> findAll(@RequestParam(defaultValue = "0") @Min(0) int from,
+                                                 @RequestParam(defaultValue = "10") @Positive int size) {
         Pageable page = PageRequest.of(from / size, size);
         return ResponseEntity.ok(users.findAll(page));
     }
 
-    /* # Удаление пользователя -> 204 No Content */
+    /* # Удаление пользователя → 204 */
     @DeleteMapping("/{userId}")
-    public ResponseEntity<Void> delete(@PathVariable @Positive long userId) {
+    public ResponseEntity<Void> delete(@PathVariable long userId) {
         users.delete(userId);
         return ResponseEntity.noContent().build();
     }

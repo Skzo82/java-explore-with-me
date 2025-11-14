@@ -7,7 +7,9 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -29,7 +31,7 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
-    /* # 404: неизвестный путь/ресурс (при соответствующей настройке MVC) */
+    /* # 404: неизвестный путь/ресурс */
     @ExceptionHandler(NoResourceFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiError handleNoResource(NoResourceFoundException ex) {
@@ -53,11 +55,11 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
-    /* # 409: конфликт уникальности/состояния/бизнес-правила */
+    /* # 409: конфликт/уникальность/бизнес-правила */
     @ExceptionHandler({
             ConflictException.class,
             DataIntegrityViolationException.class,
-            IllegalStateException.class /* # бизнес-конфликты (напр., publish не из PENDING) */
+            IllegalStateException.class
     })
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handleConflict(RuntimeException ex) {
@@ -69,7 +71,7 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
-    /* # 400: ошибки валидации и некорректные параметры/тела */
+    /* # 400: ошибки валидации/параметров/тела */
     @ExceptionHandler({
             MethodArgumentNotValidException.class,
             ConstraintViolationException.class,
@@ -88,7 +90,7 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
-    /* # 500: всё прочее — как внутренняя ошибка */
+    /* # 500: прочие случаи */
     @ExceptionHandler(Throwable.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiError handleOthers(Throwable ex) {

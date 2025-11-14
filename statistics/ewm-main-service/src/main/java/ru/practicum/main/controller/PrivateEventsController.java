@@ -26,7 +26,7 @@ public class PrivateEventsController {
 
     private final EventService service;
 
-    /* # Создание события -> 201 Created */
+    /* # Создание события пользователем -> 201 */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public EventFullDto create(@PathVariable Long userId,
@@ -34,25 +34,23 @@ public class PrivateEventsController {
         return service.create(userId, dto);
     }
 
-    /* # Список своих событий с пагинацией from/size */
+    /* # Список своих событий с пагинацией */
     @GetMapping
     public List<EventShortDto> myEvents(@PathVariable Long userId,
-                                        @RequestParam(defaultValue = "0")
-                                        @PositiveOrZero Integer from,
-                                        @RequestParam(defaultValue = "10")
-                                        @Positive Integer size) {
+                                        @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+                                        @RequestParam(defaultValue = "10") @Positive Integer size) {
         Pageable pageable = PageRequest.of(from / size, size);
         return service.getUserEvents(userId, pageable);
     }
 
-    /* # Получить своё событие по id */
+    /* # Получить своё событие */
     @GetMapping("/{eventId}")
     public EventFullDto myEvent(@PathVariable Long userId,
                                 @PathVariable Long eventId) {
         return service.getUserEvent(userId, eventId);
     }
 
-    /* # Обновление события владельцем (валидация тела включена) */
+    /* # Обновление события владельцем (валидация тела) */
     @PatchMapping("/{eventId}")
     public EventFullDto update(@PathVariable Long userId,
                                @PathVariable Long eventId,
@@ -60,7 +58,7 @@ public class PrivateEventsController {
         return service.updateByUser(userId, eventId, dto);
     }
 
-    /* # Отмена события владельцем (без тела запроса) */
+    /* # Отмена события владельцем */
     @PatchMapping("/{eventId}/cancel")
     public EventFullDto cancel(@PathVariable Long userId,
                                @PathVariable Long eventId) {

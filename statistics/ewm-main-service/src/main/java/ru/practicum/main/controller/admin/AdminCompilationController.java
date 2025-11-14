@@ -6,6 +6,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.main.dto.compilation.CompilationDto;
@@ -24,28 +25,28 @@ public class AdminCompilationController {
 
     private final CompilationService service;
 
-    /* # Создание подборки -> 201 Created */
+    /* # Создание подборки (201) */
     @PostMapping
-    @ResponseStatus(org.springframework.http.HttpStatus.CREATED)
+    @ResponseStatus(HttpStatus.CREATED)
     public CompilationDto create(@Valid @RequestBody NewCompilationDto dto) {
         return service.create(dto);
     }
 
-    /* # Частичное обновление -> 200 OK */
+    /* # Частичное обновление */
     @PatchMapping("/{compId}")
-    public CompilationDto update(@PathVariable @Positive long compId,
+    public CompilationDto update(@PathVariable long compId,
                                  @Valid @RequestBody UpdateCompilationRequest dto) {
         return service.update(compId, dto);
     }
 
-    /* # Удаление -> 204 No Content */
+    /* # Удаление */
     @DeleteMapping("/{compId}")
-    @ResponseStatus(org.springframework.http.HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable @Positive long compId) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable long compId) {
         service.delete(compId);
     }
 
-    /* # Список (для админ-проверок) — from/size с дефолтом 10 */
+    /* # Список (опциональный фильтр pinned) */
     @GetMapping
     public List<CompilationDto> list(@RequestParam(required = false) Boolean pinned,
                                      @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
