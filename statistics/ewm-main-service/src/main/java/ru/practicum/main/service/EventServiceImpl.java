@@ -35,9 +35,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new NotFoundException("Category not found: " + dto.getCategory()));
 
         /* # Дата события должна быть не раньше чем через 2 часа */
-        if (dto.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-            throw new IllegalArgumentException("Event date must be at least 2 hours in the future");
-        }
+        validateEventDate(dto.getEventDate());
 
         Event e = EventMapper.toNew(dto, initiator, cat);
         return EventMapper.toFull(eventRepo.save(e));
@@ -184,9 +182,16 @@ public class EventServiceImpl implements EventService {
     private void applyUserUpdate(Event e, UpdateEventUserRequest dto) {
         if (dto.getAnnotation() != null) e.setAnnotation(dto.getAnnotation());
         if (dto.getDescription() != null) e.setDescription(dto.getDescription());
-        if (dto.getEventDate() != null) e.setEventDate(dto.getEventDate());
-        if (dto.getLocation() != null)
+
+        if (dto.getEventDate() != null) {
+            /* # проверяем дату при обновлении */
+            validateEventDate(dto.getEventDate());
+            e.setEventDate(dto.getEventDate());
+        }
+
+        if (dto.getLocation() != null) {
             e.setLocation(new Location(dto.getLocation().getLat(), dto.getLocation().getLon()));
+        }
         if (dto.getPaid() != null) e.setPaid(dto.getPaid());
         if (dto.getParticipantLimit() != null) e.setParticipantLimit(dto.getParticipantLimit());
         if (dto.getRequestModeration() != null) e.setRequestModeration(dto.getRequestModeration());
@@ -203,9 +208,16 @@ public class EventServiceImpl implements EventService {
     private void applyAdminUpdate(Event e, UpdateEventAdminRequest dto) {
         if (dto.getAnnotation() != null) e.setAnnotation(dto.getAnnotation());
         if (dto.getDescription() != null) e.setDescription(dto.getDescription());
-        if (dto.getEventDate() != null) e.setEventDate(dto.getEventDate());
-        if (dto.getLocation() != null)
+
+        if (dto.getEventDate() != null) {
+            /* # проверяем дату при обновлении админом */
+            validateEventDate(dto.getEventDate());
+            e.setEventDate(dto.getEventDate());
+        }
+
+        if (dto.getLocation() != null) {
             e.setLocation(new Location(dto.getLocation().getLat(), dto.getLocation().getLon()));
+        }
         if (dto.getPaid() != null) e.setPaid(dto.getPaid());
         if (dto.getParticipantLimit() != null) e.setParticipantLimit(dto.getParticipantLimit());
         if (dto.getRequestModeration() != null) e.setRequestModeration(dto.getRequestModeration());
@@ -214,6 +226,13 @@ public class EventServiceImpl implements EventService {
             Category cat = categoryRepo.findById(dto.getCategory())
                     .orElseThrow(() -> new NotFoundException("Category not found: " + dto.getCategory()));
             e.setCategory(cat);
+        }
+    }
+
+    /* # Проверка даты события: не раньше, чем через 2 часа от текущего момента */
+    private void validateEventDate(LocalDateTime eventDate) {
+        if (eventDate != null && eventDate.isBefore(LocalDateTime.now().plusHours(2))) {
+            throw new IllegalArgumentException("Event date must be at least 2 hours in the future");
         }
     }
 }

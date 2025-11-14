@@ -25,8 +25,8 @@ public class AdminCompilationController {
 
     private final CompilationService service;
 
-    /* # Создание подборки (201) */
-    @PostMapping
+    /* # Создание подборки (201), поддерживаем /admin/compilations и /admin/compilations/ */
+    @PostMapping({"", "/"})
     @ResponseStatus(HttpStatus.CREATED)
     public CompilationDto create(@Valid @RequestBody NewCompilationDto dto) {
         return service.create(dto);
@@ -46,8 +46,8 @@ public class AdminCompilationController {
         service.delete(compId);
     }
 
-    /* # Список (опциональный фильтр pinned) */
-    @GetMapping
+    /* # Список (from/size -> Pageable), тоже поддерживаем оба варианта пути */
+    @GetMapping({"", "/"})
     public List<CompilationDto> list(@RequestParam(required = false) Boolean pinned,
                                      @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
                                      @RequestParam(defaultValue = "10") @Positive Integer size) {
