@@ -87,12 +87,25 @@ public class EventServiceImpl implements EventService {
                                                String sort,
                                                Pageable pageable) {
 
+        /* # Нормализуем текст: если пустой — не фильтруем по нему */
         String textSafe = (text == null || text.isBlank()) ? null : text;
+
+        /* # Проверяем список категорий: пустой список = фильтра по категориям нет */
         boolean catsEmpty = (categories == null || categories.isEmpty());
+
+        /*
+         * # ВАЖНО:
+         * Если categories пустой, нельзя передавать пустой список в IN (:categories),
+         * иначе PostgreSQL не может определить тип параметра.
+         * Передаём "фиктивное" значение -1L, чтобы тип был понятен,
+         * при этом условие ( :catsEmpty = TRUE OR e.category.id IN :categories )
+         * всё равно "замкнётся" на :catsEmpty = TRUE и IN не повлияет на результат.
+         */
+        List<Long> categoriesParam = catsEmpty ? List.of(-1L) : categories;
 
         return eventRepo.searchPublic(
                         textSafe,
-                        catsEmpty ? List.of() : categories,
+                        categoriesParam,
                         catsEmpty,
                         paid,
                         rangeStart,
