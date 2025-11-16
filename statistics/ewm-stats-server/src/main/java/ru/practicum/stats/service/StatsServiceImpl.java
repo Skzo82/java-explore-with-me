@@ -20,6 +20,7 @@ public class StatsServiceImpl implements StatsService {
         this.repo = repo;
     }
 
+    // # Поддерживаем оба формата времени: с пробелом и с 'T'
     private static final DateTimeFormatter[] TS_FORMATS = new DateTimeFormatter[]{
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
@@ -32,6 +33,7 @@ public class StatsServiceImpl implements StatsService {
         h.setApp(dto.app());
         h.setUri(dto.uri());
         h.setIp(dto.ip());
+        // # timestamp из DTO — строка, парсим в LocalDateTime
         h.setTimestamp(parseTimestamp(dto.timestamp()));
         repo.save(h);
     }
@@ -46,15 +48,19 @@ public class StatsServiceImpl implements StatsService {
             throw new IllegalArgumentException("start must be before end");
         }
         boolean hasUris = uris != null && !uris.isEmpty();
+
         if (unique) {
-            return hasUris ? repo.aggregateUniqueByUris(start, end, uris)
+            return hasUris
+                    ? repo.aggregateUniqueByUris(start, end, uris)
                     : repo.aggregateUnique(start, end);
         } else {
-            return hasUris ? repo.aggregateAllByUris(start, end, uris)
+            return hasUris
+                    ? repo.aggregateAllByUris(start, end, uris)
                     : repo.aggregateAll(start, end);
         }
     }
 
+    /* # Парсим строковый timestamp в LocalDateTime, пробуя несколько форматов */
     private static LocalDateTime parseTimestamp(String ts) {
         for (DateTimeFormatter f : TS_FORMATS) {
             try {

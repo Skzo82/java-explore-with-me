@@ -1,7 +1,9 @@
 package ru.practicum.main.controller;
 
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -18,9 +20,11 @@ public class PublicCategoryController {
 
     private final CategoryService categories;
 
-    // GET /categories
+    /* # Получение категорий с поддержкой from/size и значением size по умолчанию = 10 */
     @GetMapping
-    public List<CategoryDto> list(Pageable pageable) {
+    public List<CategoryDto> list(@RequestParam(defaultValue = "0") @PositiveOrZero int from,
+                                  @RequestParam(defaultValue = "10") @Positive int size) {
+        Pageable pageable = PageRequest.of(from / size, size);
         return categories.findAll(pageable);
     }
 

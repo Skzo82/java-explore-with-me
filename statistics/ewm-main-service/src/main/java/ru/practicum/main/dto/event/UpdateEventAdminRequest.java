@@ -1,45 +1,34 @@
 package ru.practicum.main.dto.event;
 
-import jakarta.validation.constraints.PositiveOrZero;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Size;
-import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-/* # Обновление события администратором */
+/* # DTO для частичного обновления события администратором */
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class UpdateEventAdminRequest {
 
     @Size(min = 20, max = 2000)
-    private String annotation;
+    private String annotation;         // может быть null
 
     @Size(min = 20, max = 7000)
-    private String description;
-
-    private LocalDateTime eventDate;
-
-    private Long category;
-
-    private LocationDto location;
-
-    private Boolean paid;
-
-    @PositiveOrZero
-    private Integer participantLimit;
-
-    private Boolean requestModeration;
+    private String description;        // может быть null
 
     @Size(min = 3, max = 120)
-    private String title;
+    private String title;              // может быть null
 
-    /* # "PUBLISH_EVENT" | "REJECT_EVENT" */
-    private String stateAction;
+    private LocationDto location;      // новая локация (опционально)
+    private Long category;             // id новой категории (опционально)
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime eventDate;   // новая дата (опционально)
+
+    private Boolean paid;
+    private Integer participantLimit;
+    private Boolean requestModeration;
+    private String stateAction;        // PUBLISH_EVENT / REJECT_EVENT
 }

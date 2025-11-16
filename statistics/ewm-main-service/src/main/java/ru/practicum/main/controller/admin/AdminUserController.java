@@ -3,6 +3,7 @@ package ru.practicum.main.controller.admin;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -19,27 +20,26 @@ import java.util.List;
 @RestController
 @RequestMapping("/admin/users")
 @Validated
+@RequiredArgsConstructor
 public class AdminUserController {
 
     private final UserService users;
-
-    public AdminUserController(UserService users) {
-        this.users = users;
-    }
 
     /* # Создание пользователя → 201 */
     @PostMapping
     public ResponseEntity<UserDto> create(@Valid @RequestBody NewUserRequest body) {
         UserDto created = users.create(body);
-        return ResponseEntity.created(URI.create("/admin/users/" + created.getId())).body(created);
+        return ResponseEntity.created(URI.create("/admin/users/" + created.getId()))
+                .body(created);
     }
 
-    /* # Получение списка пользователей (пагинация) → 200 */
+    /* # Получение списка пользователей (ids или пагинация) → 200 */
     @GetMapping
-    public ResponseEntity<List<UserDto>> findAll(@RequestParam(defaultValue = "0") @Min(0) int from,
+    public ResponseEntity<List<UserDto>> findAll(@RequestParam(required = false) List<Long> ids,
+                                                 @RequestParam(defaultValue = "0") @Min(0) int from,
                                                  @RequestParam(defaultValue = "10") @Positive int size) {
         Pageable page = PageRequest.of(from / size, size);
-        return ResponseEntity.ok(users.findAll(page));
+        return ResponseEntity.ok(users.findAll(ids, page));
     }
 
     /* # Удаление пользователя → 204 */

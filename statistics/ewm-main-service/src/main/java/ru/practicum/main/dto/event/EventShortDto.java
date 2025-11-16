@@ -7,7 +7,7 @@ import ru.practicum.main.dto.user.UserShortDto;
 
 import java.time.LocalDateTime;
 
-/* # Краткое представление события (используется в списках) */
+/* # Краткое представление события (для списков) */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -15,17 +15,17 @@ import java.time.LocalDateTime;
 @Builder
 public class EventShortDto {
 
-    private Long id;                 // идентификатор
-    private String annotation;       // краткое описание
-    private String title;            // заголовок
+    private Long id;                      // идентификатор
+    private String annotation;            // краткое описание
+    private String title;                 // заголовок
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime eventDate; // дата события
+    private LocalDateTime eventDate;      // дата события
 
-    private Boolean paid;            // платное ли событие
-    private Integer confirmedRequests; // подтверждённые заявки
-    private Integer views;           // просмотры
+    private Boolean paid;                 // платное ли событие
+    private Integer confirmedRequests;    // подтверждённые заявки
+    private Integer views;                // просмотры
 
-    private CategoryDto category;    // категория (DTO) — по спецификации
-    private UserShortDto initiator;  // инициатор (DTO) — по спецификации
+    private CategoryDto category;         // категория
+    private UserShortDto initiator;       // инициатор
 }

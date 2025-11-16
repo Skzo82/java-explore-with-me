@@ -8,6 +8,7 @@ import ru.practicum.main.exception.ConflictException;
 import ru.practicum.main.exception.NotFoundException;
 import ru.practicum.main.mapper.ParticipationRequestMapper;
 import ru.practicum.main.model.Event;
+import ru.practicum.main.model.EventState;
 import ru.practicum.main.model.ParticipationRequest;
 import ru.practicum.main.model.RequestStatus;
 import ru.practicum.main.model.User;
@@ -36,22 +37,30 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event not found: " + eventId));
 
+        /* # Инициатор не может подавать заявку на своё событие -> 409 */
         if (event.getInitiator() != null && event.getInitiator().getId().equals(userId)) {
             throw new ConflictException("Initiator cannot request participation in own event");
         }
 
+        if (event.getState() != EventState.PUBLISHED) {
+            throw new ConflictException("Cannot request participation in unpublished event");
+        }
+
+        /* # Повторная заявка того же пользователя на то же событие -> 409 */
         if (requestRepository.existsByEvent_IdAndRequester_Id(eventId, userId)) {
             throw new ConflictException("Request already exists for this user and event");
         }
 
-        int limit = event.getParticipantLimit(); // int, non Integer
+        int limit = event.getParticipantLimit();
         if (limit > 0) {
             long confirmed = requestRepository.countByEvent_IdAndStatus(eventId, RequestStatus.CONFIRMED);
+            /* # Лимит участников достигнут -> 409 */
             if (confirmed >= limit) {
                 throw new ConflictException("Participant limit has been reached");
             }
         }
 
+        /* # Автоподтверждение: если модерация не требуется или лимит = 0 */
         boolean autoConfirm = !Boolean.TRUE.equals(event.getRequestModeration()) || limit == 0;
 
         ParticipationRequest req = ParticipationRequest.builder()
@@ -78,6 +87,12 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
     public ParticipationRequestDto cancel(long userId, long requestId) {
         ParticipationRequest req = requestRepository.findByIdAndRequester_Id(requestId, userId)
                 .orElseThrow(() -> new NotFoundException("Request not found: " + requestId));
+
+        /* # Нельзя отменить уже подтверждённую заявку -> 409 */
+        if (req.getStatus() == RequestStatus.CONFIRMED) {
+            throw new ConflictException("Cannot cancel confirmed request");
+        }
+
         req.setStatus(RequestStatus.CANCELED);
         req = requestRepository.save(req);
         return ParticipationRequestMapper.toDto(req);

@@ -1,45 +1,36 @@
 package ru.practicum.main.dto.event;
 
-import jakarta.validation.constraints.PositiveOrZero;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Size;
-import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-/* # Частичное обновление события пользователем */
+/* # DTO для частичного обновления события пользователем */
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class UpdateEventUserRequest {
 
-    @Size(min = 20, max = 2000)
-    private String annotation;
+    @Size(min = 20, max = 2000, message = "Annotation length must be between 20 and 2000")
+    private String annotation;         // может быть null
 
-    @Size(min = 20, max = 7000)
-    private String description;
+    @Size(min = 20, max = 7000, message = "Description length must be between 20 and 7000")
+    private String description;        // может быть null
 
-    private LocalDateTime eventDate;
+    @Size(min = 3, max = 120, message = "Title length must be between 3 and 120")
+    private String title;              // может быть null
 
-    private LocationDto location;
+    private LocationDto location;      // новая локация (опционально)
+    private Long category;             // id новой категории (опционально)
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime eventDate;   // новая дата (опционально)
 
     private Boolean paid;
 
-    @PositiveOrZero
     private Integer participantLimit;
 
     private Boolean requestModeration;
-
-    @Size(min = 3, max = 120)
-    private String title;
-
-    private Long category;
-
-    /* # "SEND_TO_REVIEW" | "CANCEL_REVIEW" */
-    private String stateAction;
+    private String stateAction;        // SEND_TO_REVIEW / CANCEL_REVIEW и т.д.
 }

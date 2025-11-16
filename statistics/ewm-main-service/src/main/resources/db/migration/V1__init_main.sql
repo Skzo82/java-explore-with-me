@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS users (
     id BIGSERIAL PRIMARY KEY,
     email VARCHAR(254) NOT NULL UNIQUE,
-    name  VARCHAR(128) NOT NULL
+    name VARCHAR(250) NOT NULL
 );
 
 -- categories

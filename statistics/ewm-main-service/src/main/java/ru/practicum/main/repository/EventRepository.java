@@ -14,37 +14,39 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     Page<Event> findAllByInitiatorId(Long initiatorId, Pageable pageable);
 
-    /* # Публичный поиск событий без фильтрации по категориям */
+    /* # Публичный поиск событий (без фильтра по категориям) */
     @Query("""
-            SELECT e FROM Event e
+            SELECT e
+            FROM Event e
             WHERE e.state = ru.practicum.main.model.EventState.PUBLISHED
               AND (
                     :text IS NULL
-                 OR e.annotation LIKE CONCAT('%', :text, '%')
-                 OR e.description LIKE CONCAT('%', :text, '%')
-              )
+                    OR LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%'))
+                    OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%'))
+                  )
               AND (:paid IS NULL OR e.paid = :paid)
-              AND (e.eventDate >= COALESCE(:rangeStart, e.eventDate))
-              AND (e.eventDate <= COALESCE(:rangeEnd, e.eventDate))
+              AND e.eventDate >= :rangeStart
+              AND e.eventDate <= :rangeEnd
             """)
-    Page<Event> searchPublicWithoutCategories(@Param("text") String text,
-                                              @Param("paid") Boolean paid,
-                                              @Param("rangeStart") LocalDateTime rangeStart,
-                                              @Param("rangeEnd") LocalDateTime rangeEnd,
-                                              Pageable pageable);
+    Page<Event> searchPublicNoCategories(@Param("text") String text,
+                                         @Param("paid") Boolean paid,
+                                         @Param("rangeStart") LocalDateTime rangeStart,
+                                         @Param("rangeEnd") LocalDateTime rangeEnd,
+                                         Pageable pageable);
 
-    /* # Публичный поиск событий с фильтрацией по категориям */
+    /* # Публичный поиск событий (с фильтром по категориям) */
     @Query("""
-            SELECT e FROM Event e
+            SELECT e
+            FROM Event e
             WHERE e.state = ru.practicum.main.model.EventState.PUBLISHED
               AND (
                     :text IS NULL
-                 OR e.annotation LIKE CONCAT('%', :text, '%')
-                 OR e.description LIKE CONCAT('%', :text, '%')
-              )
+                    OR LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%'))
+                    OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%'))
+                  )
               AND (:paid IS NULL OR e.paid = :paid)
-              AND (e.eventDate >= COALESCE(:rangeStart, e.eventDate))
-              AND (e.eventDate <= COALESCE(:rangeEnd, e.eventDate))
+              AND e.eventDate >= :rangeStart
+              AND e.eventDate <= :rangeEnd
               AND e.category.id IN :categories
             """)
     Page<Event> searchPublicWithCategories(@Param("text") String text,

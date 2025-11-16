@@ -1,7 +1,6 @@
 package ru.practicum.main.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,8 +9,8 @@ import ru.practicum.main.dto.event.EventShortDto;
 import ru.practicum.main.dto.event.NewEventDto;
 import ru.practicum.main.dto.event.UpdateEventAdminRequest;
 import ru.practicum.main.dto.event.UpdateEventUserRequest;
+import ru.practicum.main.exception.ConflictException;
 import ru.practicum.main.exception.NotFoundException;
-import ru.practicum.main.exception.ValidationException;
 import ru.practicum.main.mapper.EventMapper;
 import ru.practicum.main.model.Category;
 import ru.practicum.main.model.Event;
@@ -26,8 +25,10 @@ import ru.practicum.stats.dto.ViewStatsDto;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.time.ZoneId;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 /* # Реализация сервиса событий */
@@ -39,7 +40,7 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepo;
     private final UserRepository userRepo;
     private final CategoryRepository categoryRepo;
-    private final StatsClient statsClient;
+    private final StatsClient statsClient; // # клиент к stats-service
 
     // ----- Private (owner) -----
 
@@ -75,10 +76,12 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventFullDto updateByUser(Long userId, Long eventId, UpdateEventUserRequest dto) {
         Event e = getOwned(userId, eventId);
+
         if (e.getState() == EventState.PUBLISHED) {
-            /* # нельзя править опубликованное событие -> 409 */
-            throw new IllegalStateException("Published event can’t be edited");
+            /* # пользователь не может менять опубликованное событие -> 409 */
+            throw new ConflictException("Only pending or canceled events can be changed");
         }
+
         applyUserUpdate(e, dto);
         return EventMapper.toFull(eventRepo.save(e));
     }
@@ -103,27 +106,109 @@ public class EventServiceImpl implements EventService {
                                                String sort,
                                                Pageable pageable) {
 
-        /* # Валидация интервала дат для публичного поиска */
-        if (rangeStart != null && rangeEnd != null && rangeEnd.isBefore(rangeStart)) {
-            throw new ValidationException("rangeEnd must not be before rangeStart");
+        /* # Текстовый фильтр: приводим к нижнему регистру и trim */
+        String textSafe = (text == null || text.isBlank())
+                ? null
+                : text.trim().toLowerCase(Locale.ROOT);
+
+        /* # Диапазон дат: делаем оба конца не null (локальные переменные) */
+        LocalDateTime start = rangeStart;
+        LocalDateTime end = rangeEnd;
+
+        if (start == null && end == null) {
+            start = LocalDateTime.now();
+            end = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
+        } else {
+            if (start == null) {
+                start = LocalDateTime.now();
+            }
+            if (end == null) {
+                end = LocalDateTime.of(9999, 12, 31, 23, 59, 59);
+            }
         }
 
-        String textSafe = (text == null || text.isBlank()) ? null : text;
-        boolean hasCategories = categories != null && !categories.isEmpty();
+        if (end.isBefore(start)) {
+            /* # некорректный диапазон дат -> 400 */
+            throw new IllegalArgumentException("rangeEnd must not be before rangeStart");
+        }
 
-        Page<Event> page = hasCategories
-                ? eventRepo.searchPublicWithCategories(
-                textSafe, categories, paid, rangeStart, rangeEnd, pageable)
-                : eventRepo.searchPublicWithoutCategories(
-                textSafe, paid, rangeStart, rangeEnd, pageable);
+        // # Делаем "финальные" копии для использования в лямбдах
+        final LocalDateTime startFinal = start;
+        final LocalDateTime endFinal = end;
 
-        // # Преобразуем сущности в DTO
-        List<EventShortDto> list = page.map(EventMapper::toShort).getContent();
+        /* # Загружаем все события и фильтруем в памяти (простое решение для спринта) */
+        List<Event> all = eventRepo.findAll();
 
-        // # onlyAvailable и sort при необходимости можно доработать,
-        //   но для прохождения текущих автотестов важно,
-        //   чтобы поиск и валидация по датам работали корректно.
-        return list;
+        List<Event> filtered = all.stream()
+                // только опубликованные события
+                .filter(e -> e.getState() == EventState.PUBLISHED)
+                // текстовый поиск по аннотации и описанию
+                .filter(e -> {
+                    if (textSafe == null) return true;
+                    String src = ((e.getAnnotation() == null ? "" : e.getAnnotation()) + " " +
+                            (e.getDescription() == null ? "" : e.getDescription()))
+                            .toLowerCase(Locale.ROOT);
+                    return src.contains(textSafe);
+                })
+                // фильтр по категориям
+                .filter(e -> {
+                    if (categories == null || categories.isEmpty()) return true;
+                    return e.getCategory() != null && categories.contains(e.getCategory().getId());
+                })
+                // фильтр по платности
+                .filter(e -> {
+                    if (paid == null) return true;
+                    return Boolean.TRUE.equals(paid) == Boolean.TRUE.equals(e.getPaid());
+                })
+                // фильтр по дате
+                .filter(e -> {
+                    LocalDateTime d = e.getEventDate();
+                    return d == null || (!d.isBefore(startFinal) && !d.isAfter(endFinal));
+                })
+                .collect(Collectors.toList());
+
+        /* # onlyAvailable: оставляем только события, где есть свободные места */
+        if (Boolean.TRUE.equals(onlyAvailable)) {
+            filtered = filtered.stream()
+                    .filter(e -> {
+                        Integer limit = e.getParticipantLimit();
+                        Integer confirmed = e.getConfirmedRequests();
+                        if (limit == null || limit == 0) {
+                            // лимита нет — всегда доступно
+                            return true;
+                        }
+                        if (confirmed == null) {
+                            confirmed = 0;
+                        }
+                        return confirmed < limit;
+                    })
+                    .collect(Collectors.toList());
+        }
+
+        /* # сортировка */
+        if ("EVENT_DATE".equalsIgnoreCase(sort)) {
+            filtered.sort(Comparator.comparing(Event::getEventDate,
+                    Comparator.nullsLast(Comparator.naturalOrder())));
+        } else if ("VIEWS".equalsIgnoreCase(sort)) {
+            filtered.sort(Comparator.comparing(Event::getViews,
+                    Comparator.nullsLast(Comparator.reverseOrder())));
+        }
+
+        /* # Пагинация вручную через from/size (из Pageable) */
+        int from = pageable.getPageNumber() * pageable.getPageSize();
+        int size = pageable.getPageSize();
+
+        if (from < 0) from = 0;
+        if (size <= 0) size = 10;
+
+        int startIndex = Math.min(from, filtered.size());
+        int endIndex = Math.min(from + size, filtered.size());
+
+        List<Event> page = filtered.subList(startIndex, endIndex);
+
+        return page.stream()
+                .map(EventMapper::toShort)
+                .toList();
     }
 
     @Override
@@ -136,14 +221,23 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException("Event is not published: " + eventId);
         }
 
-        /* # Получаем количество просмотров из сервиса статистики по URI события */
+        /* # Получаем количество просмотров из stats-service */
         String uri = "/events/" + eventId;
-        Instant start = Instant.parse("2000-01-01T00:00:00Z");
-        Instant end = Instant.now().plus(1, ChronoUnit.DAYS);
 
-        List<ViewStatsDto> stats = statsClient.getStats(start, end, List.of(uri), true);
-        long hits = stats.isEmpty() ? 0L : stats.get(0).hits();
-        e.setViews((int) hits);
+        Instant start = e.getCreatedOn()
+                .atZone(ZoneId.systemDefault())
+                .toInstant();
+        Instant end = Instant.now();
+
+        List<ViewStatsDto> stats = statsClient.getStats(
+                start,
+                end,
+                List.of(uri),
+                true   // уникальные IP
+        );
+
+        long views = stats.isEmpty() ? 0L : stats.get(0).hits();
+        e.setViews((int) views);
 
         return EventMapper.toFull(e);
     }
@@ -159,12 +253,18 @@ public class EventServiceImpl implements EventService {
                                           LocalDateTime rangeEnd,
                                           Pageable pageable) {
         // # Простейшая фильтрация в памяти (для прохождения проверок)
-        return eventRepo.findAll(pageable).stream()
+        return eventRepo.findAll().stream()
                 .filter(e -> users == null || users.isEmpty() || users.contains(e.getInitiator().getId()))
                 .filter(e -> states == null || states.isEmpty() || states.contains(e.getState().name()))
                 .filter(e -> categories == null || categories.isEmpty() || categories.contains(e.getCategory().getId()))
-                .filter(e -> (rangeStart == null || !e.getEventDate().isBefore(rangeStart)) &&
-                        (rangeEnd == null || !e.getEventDate().isAfter(rangeEnd)))
+                .filter(e -> {
+                    LocalDateTime d = e.getEventDate();
+                    if (rangeStart != null && d != null && d.isBefore(rangeStart)) return false;
+                    if (rangeEnd != null && d != null && d.isAfter(rangeEnd)) return false;
+                    return true;
+                })
+                .skip((long) pageable.getPageNumber() * pageable.getPageSize())
+                .limit(pageable.getPageSize())
                 .map(EventMapper::toFull)
                 .collect(Collectors.toList());
     }
@@ -179,7 +279,7 @@ public class EventServiceImpl implements EventService {
         if ("PUBLISH_EVENT".equals(dto.getStateAction())) {
             if (e.getState() != EventState.PENDING) {
                 /* # публиковать можно только PENDING -> 409 */
-                throw new IllegalStateException("Only pending can be published");
+                throw new ConflictException("Only pending events can be published");
             }
             e.setState(EventState.PUBLISHED);
             e.setPublishedOn(LocalDateTime.now());
@@ -187,7 +287,7 @@ public class EventServiceImpl implements EventService {
         } else if ("REJECT_EVENT".equals(dto.getStateAction())) {
             if (e.getState() == EventState.PUBLISHED) {
                 /* # нельзя отклонить уже опубликованное -> 409 */
-                throw new IllegalStateException("Cannot reject published");
+                throw new ConflictException("Cannot reject published event");
             }
             e.setState(EventState.CANCELED);
         }
@@ -221,7 +321,13 @@ public class EventServiceImpl implements EventService {
             e.setLocation(new Location(dto.getLocation().getLat(), dto.getLocation().getLon()));
         }
         if (dto.getPaid() != null) e.setPaid(dto.getPaid());
-        if (dto.getParticipantLimit() != null) e.setParticipantLimit(dto.getParticipantLimit());
+        if (dto.getParticipantLimit() != null) {
+            if (dto.getParticipantLimit() < 0) {
+                // # для пользователя отрицательный лимит -> 400 BAD_REQUEST
+                throw new IllegalArgumentException("Participant limit must be non-negative");
+            }
+            e.setParticipantLimit(dto.getParticipantLimit());
+        }
         if (dto.getRequestModeration() != null) e.setRequestModeration(dto.getRequestModeration());
         if (dto.getTitle() != null) e.setTitle(dto.getTitle());
         if (dto.getCategory() != null) {
@@ -238,16 +344,23 @@ public class EventServiceImpl implements EventService {
         if (dto.getDescription() != null) e.setDescription(dto.getDescription());
 
         if (dto.getEventDate() != null) {
-            /* # проверяем дату при обновлении админом */
-            validateEventDate(dto.getEventDate());
-            e.setEventDate(dto.getEventDate());
+            LocalDateTime newDate = dto.getEventDate();
+            if (newDate.isBefore(LocalDateTime.now())) {
+                throw new IllegalArgumentException("Event date cannot be in the past");
+            }
+            e.setEventDate(newDate);
         }
 
         if (dto.getLocation() != null) {
             e.setLocation(new Location(dto.getLocation().getLat(), dto.getLocation().getLon()));
         }
         if (dto.getPaid() != null) e.setPaid(dto.getPaid());
-        if (dto.getParticipantLimit() != null) e.setParticipantLimit(dto.getParticipantLimit());
+        if (dto.getParticipantLimit() != null) {
+            if (dto.getParticipantLimit() < 0) {
+                throw new IllegalArgumentException("Participant limit must be non-negative");
+            }
+            e.setParticipantLimit(dto.getParticipantLimit());
+        }
         if (dto.getRequestModeration() != null) e.setRequestModeration(dto.getRequestModeration());
         if (dto.getTitle() != null) e.setTitle(dto.getTitle());
         if (dto.getCategory() != null) {
