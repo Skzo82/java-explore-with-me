@@ -22,17 +22,23 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
+    /* # Создание пользователя */
     @Override
     @Transactional
     public UserDto create(NewUserRequest request) {
-        /* # Проверка уникальности email -> 409 Conflict */
-        if (userRepository.existsByEmailIgnoreCase(request.getEmail())) {
+        /* # Проверка уникальности email -> 409 Conflict
+         *   Используем точное совпадение без изменения регистра,
+         *   чтобы не ловить "ложные" конфликты.
+         */
+        if (userRepository.existsByEmail(request.getEmail())) {
             throw new ConflictException("Email already exists: " + request.getEmail());
         }
+
         User saved = userRepository.save(UserMapper.fromNew(request));
         return UserMapper.toDto(saved);
     }
 
+    /* # Удаление пользователя */
     @Override
     @Transactional
     public void delete(Long userId) {
@@ -42,6 +48,7 @@ public class UserServiceImpl implements UserService {
         userRepository.deleteById(userId);
     }
 
+    /* # Поиск пользователей по ids или пагинации */
     @Override
     public List<UserDto> findAll(List<Long> ids, Pageable pageable) {
         if (ids != null && !ids.isEmpty()) {

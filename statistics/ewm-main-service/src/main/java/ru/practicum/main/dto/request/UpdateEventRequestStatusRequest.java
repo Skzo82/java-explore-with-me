@@ -17,5 +17,5 @@ public class UpdateEventRequestStatusRequest {
 
     /* # Новый статус: "CONFIRMED" или "REJECTED" */
     @NotNull
-    private String status;
+    private EventRequestStatusAction status;
 }

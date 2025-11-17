@@ -5,7 +5,6 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
-/* # DTO для создания/обновления категории */
 @Getter
 @Setter
 public class NewCategoryDto {

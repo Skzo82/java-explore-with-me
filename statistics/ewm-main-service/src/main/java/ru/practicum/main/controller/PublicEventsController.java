@@ -40,7 +40,6 @@ public class PublicEventsController {
             @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
             @RequestParam(defaultValue = "10") @Positive Integer size
     ) {
-        /* # Преобразуем from/size в Pageable */
         if (size == null || size <= 0) {
             size = 10; // # защита от некорректных значений
         }
@@ -59,7 +58,6 @@ public class PublicEventsController {
         return eventService.getPublicEvents(filter, pageable);
     }
 
-    /* # Публичное получение опубликованного события по id (+инкремент views/статистика в сервисе) */
     @GetMapping("/events/{eventId}")
     public EventFullDto getPublicById(@PathVariable Long eventId) {
         return eventService.getPublishedEventById(eventId);

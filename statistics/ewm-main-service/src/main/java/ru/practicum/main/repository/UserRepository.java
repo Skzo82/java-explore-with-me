@@ -7,6 +7,8 @@ import java.util.List;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
+    boolean existsByEmail(String email);
+
     boolean existsByEmailIgnoreCase(String email);
 
     List<User> findAllByIdIn(List<Long> ids);

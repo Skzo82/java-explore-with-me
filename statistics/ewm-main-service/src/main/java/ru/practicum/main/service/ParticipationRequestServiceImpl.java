@@ -8,6 +8,7 @@ import ru.practicum.main.exception.ConflictException;
 import ru.practicum.main.exception.NotFoundException;
 import ru.practicum.main.mapper.ParticipationRequestMapper;
 import ru.practicum.main.model.Event;
+import ru.practicum.main.model.EventState;
 import ru.practicum.main.model.ParticipationRequest;
 import ru.practicum.main.model.RequestStatus;
 import ru.practicum.main.model.User;
@@ -42,14 +43,10 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
             throw new ConflictException("Initiator cannot request participation in own event");
         }
 
-        /*
-         * ВАЖНО:
-         * Ранее здесь было ограничение:
-         *   if (event.getState() != EventState.PUBLISHED) -> 409
-         * Но тесты Postman ожидают успешное создание заявки
-         * в сценарии подготовки данных, даже если событие ещё не опубликовано.
-         * Поэтому проверку на PUBLISHED убираем.
-         */
+        /* # Нельзя подавать заявку на неопубликованное событие -> 409 */
+        if (event.getState() != EventState.PUBLISHED) {
+            throw new ConflictException("Cannot request participation in unpublished event");
+        }
 
         /* # Повторная заявка того же пользователя на то же событие -> 409 */
         if (requestRepository.existsByEvent_IdAndRequester_Id(eventId, userId)) {

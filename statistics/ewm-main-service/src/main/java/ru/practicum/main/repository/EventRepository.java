@@ -12,19 +12,21 @@ import java.util.List;
 
 public interface EventRepository extends JpaRepository<Event, Long> {
 
+    /* # События по инициатору (личный кабинет) */
     Page<Event> findAllByInitiatorId(Long initiatorId, Pageable pageable);
 
-    boolean existsByCategoryId(Long categoryId);
+    /* # Проверка наличия событий в категории (для удаления категории) */
+    boolean existsByCategory_Id(Long categoryId);
 
-    /* # Публичный поиск событий (без фильтра по категориям) */
+    /* # Публичный поиск без фильтра по категориям */
     @Query("""
             SELECT e
             FROM Event e
             WHERE e.state = ru.practicum.main.model.EventState.PUBLISHED
               AND (
-                     :text IS NULL
-                     OR LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%'))
-                     OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%'))
+                    :text IS NULL
+                    OR LOWER(e.annotation) LIKE :text
+                    OR LOWER(e.description) LIKE :text
                   )
               AND (:paid IS NULL OR e.paid = :paid)
               AND e.eventDate >= :rangeStart
@@ -36,20 +38,20 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                                          @Param("rangeEnd") LocalDateTime rangeEnd,
                                          Pageable pageable);
 
-    /* # Публичный поиск событий (с фильтром по категориям) */
+    /* # Публичный поиск c фильтром по категориям */
     @Query("""
             SELECT e
             FROM Event e
             WHERE e.state = ru.practicum.main.model.EventState.PUBLISHED
               AND (
-                     :text IS NULL
-                     OR LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%'))
-                     OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%'))
+                    :text IS NULL
+                    OR LOWER(e.annotation) LIKE :text
+                    OR LOWER(e.description) LIKE :text
                   )
               AND (:paid IS NULL OR e.paid = :paid)
               AND e.eventDate >= :rangeStart
               AND e.eventDate <= :rangeEnd
-              AND e.category.id IN :categories
+              AND (COALESCE(:categories) IS NULL OR e.category.id IN :categories)
             """)
     Page<Event> searchPublicWithCategories(@Param("text") String text,
                                            @Param("categories") List<Long> categories,

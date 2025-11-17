@@ -16,6 +16,7 @@ import ru.practicum.main.repository.EventRepository;
 
 import java.util.List;
 
+/* # Сервис для работы с категориями */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -24,6 +25,7 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository repo;
     private final EventRepository eventRepo;
 
+    /* # Создание категории */
     @Override
     @Transactional
     public CategoryDto create(NewCategoryDto request) {
@@ -35,6 +37,7 @@ public class CategoryServiceImpl implements CategoryService {
         return CategoryMapper.toDto(saved);
     }
 
+    /* # Обновление категории */
     @Override
     @Transactional
     public CategoryDto update(long id, UpdateCategoryRequest request) {
@@ -52,6 +55,7 @@ public class CategoryServiceImpl implements CategoryService {
         return CategoryMapper.toDto(updated);
     }
 
+    /* # Удаление категории */
     @Override
     @Transactional
     public void delete(long id) {
@@ -59,19 +63,21 @@ public class CategoryServiceImpl implements CategoryService {
             throw new NotFoundException("Category not found: " + id);
         }
         // # перед удалением проверяем, что нет событий с этой категорией
-        if (eventRepo.existsByCategoryId(id)) {
+        if (eventRepo.existsByCategory_Id(id)) {
             throw new DataIntegrityViolationException("Cannot delete category with linked events");
         }
         repo.deleteById(id);
     }
 
+    /* # Публичный список категорий с пагинацией (отсортирован по id) */
     @Override
     public List<CategoryDto> findAll(Pageable pageable) {
-        return repo.findAll(pageable)
+        return repo.findAllByOrderByIdAsc(pageable)
                 .map(CategoryMapper::toDto)
                 .getContent();
     }
 
+    /* # Публичное получение категории по id */
     @Override
     public CategoryDto getById(long id) {
         Category c = repo.findById(id)

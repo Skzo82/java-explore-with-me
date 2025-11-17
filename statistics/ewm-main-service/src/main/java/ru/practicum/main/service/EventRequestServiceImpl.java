@@ -15,6 +15,7 @@ import ru.practicum.main.model.RequestStatus;
 import ru.practicum.main.repository.EventRepository;
 import ru.practicum.main.repository.ParticipationRequestRepository;
 import ru.practicum.main.repository.UserRepository;
+import ru.practicum.main.dto.request.EventRequestStatusAction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,7 +83,7 @@ public class EventRequestServiceImpl implements EventRequestService {
         int limit = event.getParticipantLimit() == null ? 0 : event.getParticipantLimit();
         int currentConfirmed = event.getConfirmedRequests() == null ? 0 : event.getConfirmedRequests();
 
-        String status = dto.getStatus();
+        EventRequestStatusAction status = dto.getStatus();
         if (status == null) {
             throw new ConflictException("Status is required");
         }
@@ -90,7 +91,7 @@ public class EventRequestServiceImpl implements EventRequestService {
         List<ParticipationRequestDto> confirmedDtos = new ArrayList<>();
         List<ParticipationRequestDto> rejectedDtos = new ArrayList<>();
 
-        if ("CONFIRMED".equals(status)) {
+        if (status == EventRequestStatusAction.CONFIRMED) {
             // # Если лимит уже исчерпан – сразу 409
             if (limit > 0 && currentConfirmed >= limit) {
                 throw new ConflictException("Participant limit has been reached");
@@ -106,13 +107,14 @@ public class EventRequestServiceImpl implements EventRequestService {
                 confirmedDtos.add(ParticipationRequestMapper.toDto(r));
             }
 
-        } else if ("REJECTED".equals(status)) {
+        } else if (status == EventRequestStatusAction.REJECTED) {
             for (ParticipationRequest r : requests) {
                 r.setStatus(RequestStatus.REJECTED);
                 rejectedDtos.add(ParticipationRequestMapper.toDto(r));
             }
         } else {
-            throw new ConflictException("Unknown status: " + status);
+            // # На будущее, если вдруг появятся новые значения в enum
+            throw new ConflictException("Unknown status: " + status.name());
         }
 
         requestRepository.saveAll(requests);

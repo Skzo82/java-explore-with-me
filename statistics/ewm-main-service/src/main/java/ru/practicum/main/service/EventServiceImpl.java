@@ -1,6 +1,7 @@
 package ru.practicum.main.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +22,7 @@ import ru.practicum.main.repository.EventRepository;
 import ru.practicum.main.repository.UserRepository;
 import ru.practicum.stats.client.StatsClient;
 import ru.practicum.stats.dto.ViewStatsDto;
+import ru.practicum.main.dto.event.UserStateAction;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -32,6 +34,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepo;
@@ -96,10 +99,12 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public List<EventShortDto> getPublicEvents(PublicEventFilterDto filter, Pageable pageable) {
 
-        /* # Текстовый фильтр: приводим к безопасному виду */
-        String textSafe = (filter.getText() == null || filter.getText().isBlank())
-                ? null
-                : filter.getText().trim();
+        /* # Текстовый фильтр: подготовим паттерн "%text%" в нижнем регистре */
+        String textPattern = null;
+        if (filter.getText() != null && !filter.getText().isBlank()) {
+            String normalized = filter.getText().trim().toLowerCase(Locale.ROOT);
+            textPattern = "%" + normalized + "%";
+        }
 
         /* # Диапазон дат: делаем оба конца не null */
         LocalDateTime start = filter.getRangeStart();
@@ -144,7 +149,7 @@ public class EventServiceImpl implements EventService {
         Page<Event> page;
         if (hasCategories) {
             page = eventRepo.searchPublicWithCategories(
-                    textSafe,
+                    textPattern,
                     filter.getCategories(),
                     filter.getPaid(),
                     start,
@@ -153,7 +158,7 @@ public class EventServiceImpl implements EventService {
             );
         } else {
             page = eventRepo.searchPublicNoCategories(
-                    textSafe,
+                    textPattern,
                     filter.getPaid(),
                     start,
                     end,
@@ -181,8 +186,12 @@ public class EventServiceImpl implements EventService {
                     .collect(Collectors.toList());
         }
 
-        /* # Обогащаем события статистикой просмотров */
-        enrichWithViews(events);
+        /* # Обогащаем события статистикой просмотров — но не ломаем эндпоинт при ошибке stats-service */
+        try {
+            enrichWithViews(events);
+        } catch (Exception ex) {
+            log.warn("Failed to enrich events with views from stats-service", ex);
+        }
 
         return events.stream()
                 .map(EventMapper::toShort)
@@ -252,9 +261,12 @@ public class EventServiceImpl implements EventService {
         Event e = eventRepo.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event not found: " + eventId));
 
+        // # Сначала обновляем поля события
         applyAdminUpdate(e, dto);
 
-        if ("PUBLISH_EVENT".equals(dto.getStateAction())) {
+        // # Потом применяем действие администратора по enum
+        AdminStateAction action = dto.getStateAction();
+        if (action == AdminStateAction.PUBLISH_EVENT) {
             if (e.getState() != EventState.PENDING) {
                 /* # публиковать можно только PENDING -> 409 */
                 throw new ConflictException("Only pending events can be published");
@@ -262,7 +274,7 @@ public class EventServiceImpl implements EventService {
             e.setState(EventState.PUBLISHED);
             e.setPublishedOn(LocalDateTime.now());
 
-        } else if ("REJECT_EVENT".equals(dto.getStateAction())) {
+        } else if (action == AdminStateAction.REJECT_EVENT) {
             if (e.getState() == EventState.PUBLISHED) {
                 /* # нельзя отклонить уже опубликованное -> 409 */
                 throw new ConflictException("Cannot reject published event");
@@ -286,8 +298,12 @@ public class EventServiceImpl implements EventService {
     }
 
     private void applyUserUpdate(Event e, UpdateEventUserRequest dto) {
-        if (dto.getAnnotation() != null) e.setAnnotation(dto.getAnnotation());
-        if (dto.getDescription() != null) e.setDescription(dto.getDescription());
+        if (dto.getAnnotation() != null) {
+            e.setAnnotation(dto.getAnnotation());
+        }
+        if (dto.getDescription() != null) {
+            e.setDescription(dto.getDescription());
+        }
 
         if (dto.getEventDate() != null) {
             /* # проверяем дату при обновлении */
@@ -298,7 +314,9 @@ public class EventServiceImpl implements EventService {
         if (dto.getLocation() != null) {
             e.setLocation(new Location(dto.getLocation().getLat(), dto.getLocation().getLon()));
         }
-        if (dto.getPaid() != null) e.setPaid(dto.getPaid());
+        if (dto.getPaid() != null) {
+            e.setPaid(dto.getPaid());
+        }
         if (dto.getParticipantLimit() != null) {
             if (dto.getParticipantLimit() < 0) {
                 // # для пользователя отрицательный лимит -> 400 BAD_REQUEST
@@ -306,15 +324,25 @@ public class EventServiceImpl implements EventService {
             }
             e.setParticipantLimit(dto.getParticipantLimit());
         }
-        if (dto.getRequestModeration() != null) e.setRequestModeration(dto.getRequestModeration());
-        if (dto.getTitle() != null) e.setTitle(dto.getTitle());
+        if (dto.getRequestModeration() != null) {
+            e.setRequestModeration(dto.getRequestModeration());
+        }
+        if (dto.getTitle() != null) {
+            e.setTitle(dto.getTitle());
+        }
         if (dto.getCategory() != null) {
             Category cat = categoryRepo.findById(dto.getCategory())
                     .orElseThrow(() -> new NotFoundException("Category not found: " + dto.getCategory()));
             e.setCategory(cat);
         }
-        if ("CANCEL_REVIEW".equals(dto.getStateAction())) e.setState(EventState.CANCELED);
-        if ("SEND_TO_REVIEW".equals(dto.getStateAction())) e.setState(EventState.PENDING);
+
+        /* # Применяем action пользователя по enum */
+        UserStateAction action = dto.getStateAction();
+        if (action == UserStateAction.CANCEL_REVIEW) {
+            e.setState(EventState.CANCELED);
+        } else if (action == UserStateAction.SEND_TO_REVIEW) {
+            e.setState(EventState.PENDING);
+        }
     }
 
     private void applyAdminUpdate(Event e, UpdateEventAdminRequest dto) {
@@ -322,12 +350,9 @@ public class EventServiceImpl implements EventService {
         if (dto.getDescription() != null) e.setDescription(dto.getDescription());
 
         if (dto.getEventDate() != null) {
-            LocalDateTime newDate = dto.getEventDate();
-            // # для админа: дата не может быть в прошлом
-            if (newDate.isBefore(LocalDateTime.now())) {
-                throw new IllegalArgumentException("Event date cannot be in the past");
-            }
-            e.setEventDate(newDate);
+            /* # для админа используем ту же проверку, что и при создании */
+            validateEventDate(dto.getEventDate());
+            e.setEventDate(dto.getEventDate());
         }
 
         if (dto.getLocation() != null) {
@@ -373,7 +398,7 @@ public class EventServiceImpl implements EventService {
 
         Map<String, Long> hitsByUri = stats.stream()
                 .collect(Collectors.toMap(
-                        ViewStatsDto::uri,   // <- ВАЖНО: используем accessor record, а не getUri()
+                        ViewStatsDto::uri,
                         ViewStatsDto::hits,
                         Long::sum
                 ));
