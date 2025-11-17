@@ -3,10 +3,9 @@ package ru.practicum.main.service;
 import org.springframework.data.domain.Pageable;
 import ru.practicum.main.dto.event.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
-/* # Контракт сервиса событий */
+/* # Контракт сервиса событий (унифицировано: фильтры + Pageable) */
 public interface EventService {
 
     // ----- Private (owner) -----
