@@ -47,7 +47,6 @@ public class PublicEventsController {
         int page = from / size;
         Pageable pageable = PageRequest.of(page, size);
 
-        /* # Собираем фильтр в дто, чтобы не передавать много параметров в сервис */
         PublicEventFilterDto filter = new PublicEventFilterDto();
         filter.setText(text);
         filter.setCategories(categories);
