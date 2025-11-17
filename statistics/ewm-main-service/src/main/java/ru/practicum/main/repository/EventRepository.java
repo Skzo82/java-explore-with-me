@@ -14,15 +14,17 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     Page<Event> findAllByInitiatorId(Long initiatorId, Pageable pageable);
 
+    boolean existsByCategoryId(Long categoryId);
+
     /* # Публичный поиск событий (без фильтра по категориям) */
     @Query("""
             SELECT e
             FROM Event e
             WHERE e.state = ru.practicum.main.model.EventState.PUBLISHED
               AND (
-                    :text IS NULL
-                    OR LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%'))
-                    OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%'))
+                     :text IS NULL
+                     OR LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%'))
+                     OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%'))
                   )
               AND (:paid IS NULL OR e.paid = :paid)
               AND e.eventDate >= :rangeStart
@@ -40,9 +42,9 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             FROM Event e
             WHERE e.state = ru.practicum.main.model.EventState.PUBLISHED
               AND (
-                    :text IS NULL
-                    OR LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%'))
-                    OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%'))
+                     :text IS NULL
+                     OR LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%'))
+                     OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%'))
                   )
               AND (:paid IS NULL OR e.paid = :paid)
               AND e.eventDate >= :rangeStart

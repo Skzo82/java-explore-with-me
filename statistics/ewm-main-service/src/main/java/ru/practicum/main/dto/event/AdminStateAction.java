@@ -1,6 +1,7 @@
 package ru.practicum.main.dto.event;
 
-/* # Действия администратора */
+/* # Возможные действия администратора над событием */
 public enum AdminStateAction {
-    PUBLISH_EVENT, REJECT_EVENT
+    PUBLISH_EVENT,
+    REJECT_EVENT
 }

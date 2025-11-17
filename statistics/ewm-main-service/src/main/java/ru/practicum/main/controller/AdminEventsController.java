@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.main.dto.event.AdminEventFilterDto;
 import ru.practicum.main.dto.event.EventFullDto;
 import ru.practicum.main.dto.event.UpdateEventAdminRequest;
 import ru.practicum.main.service.EventService;
@@ -27,7 +28,7 @@ public class AdminEventsController {
 
     /* # Поиск событий админом с фильтрами и пагинацией */
     @GetMapping
-    public List<EventFullDto> search(
+    public List<EventFullDto> searchAdmin(
             @RequestParam(required = false) List<Long> users,
             @RequestParam(required = false) List<String> states,
             @RequestParam(required = false) List<Long> categories,
@@ -39,7 +40,15 @@ public class AdminEventsController {
             @RequestParam(defaultValue = "10") @Positive Integer size
     ) {
         Pageable pageable = PageRequest.of(from / size, size);
-        return service.searchAdmin(users, states, categories, rangeStart, rangeEnd, pageable);
+
+        AdminEventFilterDto filter = new AdminEventFilterDto();
+        filter.setUsers(users);
+        filter.setStates(states);
+        filter.setCategories(categories);
+        filter.setRangeStart(rangeStart);
+        filter.setRangeEnd(rangeEnd);
+
+        return service.searchAdmin(filter, pageable);
     }
 
     /* # Обновление события администратором */

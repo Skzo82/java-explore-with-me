@@ -10,6 +10,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.main.dto.event.EventFullDto;
 import ru.practicum.main.dto.event.EventShortDto;
+import ru.practicum.main.dto.event.PublicEventFilterDto;
 import ru.practicum.main.service.EventService;
 
 import java.time.LocalDateTime;
@@ -40,11 +41,26 @@ public class PublicEventsController {
             @RequestParam(defaultValue = "10") @Positive Integer size
     ) {
         /* # Преобразуем from/size в Pageable */
-        Pageable pageable = PageRequest.of(from / size, size);
-        return eventService.getPublicEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, pageable);
+        if (size == null || size <= 0) {
+            size = 10; // # защита от некорректных значений
+        }
+        int page = from / size;
+        Pageable pageable = PageRequest.of(page, size);
+
+        /* # Собираем фильтр в дто, чтобы не передавать много параметров в сервис */
+        PublicEventFilterDto filter = new PublicEventFilterDto();
+        filter.setText(text);
+        filter.setCategories(categories);
+        filter.setPaid(paid);
+        filter.setRangeStart(rangeStart);
+        filter.setRangeEnd(rangeEnd);
+        filter.setOnlyAvailable(onlyAvailable);
+        filter.setSort(sort);
+
+        return eventService.getPublicEvents(filter, pageable);
     }
 
-    /* # Публичное получение опубликованного события по id (+инкремент views в сервисе) */
+    /* # Публичное получение опубликованного события по id (+инкремент views/статистика в сервисе) */
     @GetMapping("/events/{eventId}")
     public EventFullDto getPublicById(@PathVariable Long eventId) {
         return eventService.getPublishedEventById(eventId);

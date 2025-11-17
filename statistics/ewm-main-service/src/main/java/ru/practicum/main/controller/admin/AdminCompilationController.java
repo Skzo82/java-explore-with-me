@@ -9,6 +9,7 @@ import ru.practicum.main.dto.compilation.CompilationDto;
 import ru.practicum.main.dto.compilation.NewCompilationDto;
 import ru.practicum.main.dto.compilation.UpdateCompilationRequest;
 import ru.practicum.main.service.CompilationService;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 
@@ -71,6 +72,6 @@ public class AdminCompilationController {
             @RequestParam(defaultValue = "10") Integer size
     ) {
         int page = from / size;
-        return service.findAllPublic(pinned, org.springframework.data.domain.PageRequest.of(page, size));
+        return service.findAllPublic(pinned, PageRequest.of(page, size));
     }
 }

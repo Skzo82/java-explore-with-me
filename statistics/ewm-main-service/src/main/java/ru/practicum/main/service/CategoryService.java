@@ -7,7 +7,9 @@ import ru.practicum.main.dto.category.UpdateCategoryRequest;
 
 import java.util.List;
 
+/* # Сервис категорий */
 public interface CategoryService {
+
     CategoryDto create(NewCategoryDto request);
 
     CategoryDto update(long id, UpdateCategoryRequest request);
@@ -16,5 +18,5 @@ public interface CategoryService {
 
     List<CategoryDto> findAll(Pageable pageable);
 
-    CategoryDto getById(long id);   // <- questo è il metodo che manca nella tua Impl
+    CategoryDto getById(long id);
 }

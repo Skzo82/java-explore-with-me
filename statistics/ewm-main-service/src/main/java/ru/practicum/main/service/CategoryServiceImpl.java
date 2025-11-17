@@ -12,6 +12,7 @@ import ru.practicum.main.exception.NotFoundException;
 import ru.practicum.main.mapper.CategoryMapper;
 import ru.practicum.main.model.Category;
 import ru.practicum.main.repository.CategoryRepository;
+import ru.practicum.main.repository.EventRepository;
 
 import java.util.List;
 
@@ -21,6 +22,7 @@ import java.util.List;
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository repo;
+    private final EventRepository eventRepo;
 
     @Override
     @Transactional
@@ -29,7 +31,6 @@ public class CategoryServiceImpl implements CategoryService {
         if (repo.existsByNameIgnoreCase(request.getName())) {
             throw new DataIntegrityViolationException("Category name already exists: " + request.getName());
         }
-        // NB: usa il metodo del mapper che hai realmente (fromNew o toNewEntity)
         Category saved = repo.save(CategoryMapper.fromNew(request));
         return CategoryMapper.toDto(saved);
     }
@@ -57,12 +58,15 @@ public class CategoryServiceImpl implements CategoryService {
         if (!repo.existsById(id)) {
             throw new NotFoundException("Category not found: " + id);
         }
+        // # перед удалением проверяем, что нет событий с этой категорией
+        if (eventRepo.existsByCategoryId(id)) {
+            throw new DataIntegrityViolationException("Cannot delete category with linked events");
+        }
         repo.deleteById(id);
     }
 
     @Override
     public List<CategoryDto> findAll(Pageable pageable) {
-        // # корректно получаем контент страницы и маппим в DTO
         return repo.findAll(pageable)
                 .map(CategoryMapper::toDto)
                 .getContent();
@@ -70,7 +74,6 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryDto getById(long id) {
-        // # единичное чтение по id
         Category c = repo.findById(id)
                 .orElseThrow(() -> new NotFoundException("Category not found: " + id));
         return CategoryMapper.toDto(c);
