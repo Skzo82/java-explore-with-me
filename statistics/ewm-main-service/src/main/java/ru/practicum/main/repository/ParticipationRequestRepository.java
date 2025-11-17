@@ -1,4 +1,3 @@
-// src/main/java/ru/practicum/main/repository/ParticipationRequestRepository.java
 package ru.practicum.main.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -8,7 +8,6 @@ import ru.practicum.main.exception.ConflictException;
 import ru.practicum.main.exception.NotFoundException;
 import ru.practicum.main.mapper.ParticipationRequestMapper;
 import ru.practicum.main.model.Event;
-import ru.practicum.main.model.EventState;
 import ru.practicum.main.model.ParticipationRequest;
 import ru.practicum.main.model.RequestStatus;
 import ru.practicum.main.model.User;
