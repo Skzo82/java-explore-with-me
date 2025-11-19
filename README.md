@@ -347,3 +347,167 @@ curl "http://localhost:9090/stats?start=2025-01-01%2000:00:00&end=2030-01-01%200
 - `/api/health` и `/actuator/health` возвращают корректный статус
 
 ---
+
+## Этап 3 — Дополнительная функциональность: комментарии к событиям
+
+В качестве дополнительной функциональности реализована возможность **комментирования событий**.
+
+### Описание функциональности
+
+Пользователь может:
+
+- оставить комментарий к опубликованному событию;
+- редактировать свой комментарий;
+- удалять свои комментарии.
+
+Публично доступны:
+
+- получение комментария по его идентификатору;
+- получение списка комментариев к событию.
+
+---
+
+### Миграция базы данных (Flyway)
+
+Миграция **`V10__comments.sql`** расширяет схему основной базы данных:
+
+```sql
+CREATE TABLE IF NOT EXISTS comments (
+    id BIGSERIAL PRIMARY KEY,
+    event_id  BIGINT NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    author_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    text      VARCHAR(1000) NOT NULL,
+    created   TIMESTAMP NOT NULL,
+    updated   TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_comments_event_id ON comments(event_id);
+CREATE INDEX IF NOT EXISTS idx_comments_author_id ON comments(author_id);
+```
+
+---
+
+### Backend‑компоненты комментариев
+
+**Модель:**
+
+- `ru.practicum.main.model.Comment`
+
+**DTO:**
+
+- `ru.practicum.main.dto.comment.CommentDto`
+- `ru.practicum.main.dto.comment.NewCommentDto`
+
+**Mapper:**
+
+- `ru.practicum.main.mapper.CommentMapper`
+
+**Репозиторий:**
+
+- `ru.practicum.main.repository.CommentRepository`
+
+**Сервис и реализация:**
+
+- `ru.practicum.main.service.CommentService`
+- `ru.practicum.main.service.CommentServiceImpl`
+
+В сервисе реализованы проверки:
+
+- комментировать можно только события в состоянии `PUBLISHED`;
+- редактировать и удалять комментарий может только его автор;
+- при нарушениях выбрасываются `NotFoundException` и `ConflictException`
+  с корректным отображением HTTP‑кодов `404` и `409` через глобальный обработчик ошибок.
+
+**Контроллер:**
+
+- `ru.practicum.main.controller.CommentController`
+
+Реализованные эндпоинты:
+
+#### Приватные (для авторизованных пользователей)
+
+- `POST   /users/{userId}/events/{eventId}/comments`
+- `PATCH  /users/{userId}/events/{eventId}/comments/{commentId}`
+- `DELETE /users/{userId}/events/{eventId}/comments/{commentId}`
+
+#### Публичные
+
+- `GET /events/{eventId}/comments`
+- `GET /comments/{commentId}`
+
+---
+
+### Postman‑коллекция для проверки функциональности
+
+Для проверки дополнительной функциональности используется Postman‑коллекция:
+
+```text
+postman/feature.json
+```
+
+Коллекция `comments-feature` содержит запросы:
+
+1. создание комментария (`201`);
+2. обновление комментария (`200`);
+3. получение комментария по id (`200`);
+4. получение списка комментариев события (`200`);
+5. удаление комментария (`204`);
+6. повторное получение удалённого комментария (`404`).
+
+Используются переменные коллекции:
+
+```text
+baseUrl   = http://localhost:8080
+commentId = (устанавливается автоматически тестами)
+```
+
+---
+
+## Полный запуск проекта
+
+```bash
+mvn -q clean package
+docker compose up -d
+```
+
+Проверка состояния сервисов:
+
+```bash
+curl http://localhost:8080/api/health
+curl http://localhost:9090/actuator/health
+```
+
+---
+
+## Pull Request для этапа 3
+
+Реализация дополнительной функциональности выполнена в ветке:
+
+```text
+feature/comments
+```
+
+Необходим Pull Request:
+
+```text
+feature/comments → main
+```
+
+Ссылка на Pull Request должна быть добавлена сюда после создания:
+
+```text
+PR: <ссылка на Pull Request>
+```
+
+---
+
+## Сдача диплома
+
+1. Переключиться на ветку `feature/comments`.
+2. На GitHub нажать **Code → Download ZIP**.
+3. Загрузить ZIP‑архив на платформу Практикума.
+4. Убедиться, что код в архиве совпадает с кодом в репозитории.
+
+---
+
+Проект завершён: реализованы все три этапа (статистика, основной сервис и комментарии).
