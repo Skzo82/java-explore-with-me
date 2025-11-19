@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: ewm
       POSTGRES_PASSWORD: ewm
     ports:
-      - "5543:5432"      # porta host libera
+      - "5543:5432"
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "ewm", "-d", "ewm_stats"]
       interval: 5s
@@ -24,7 +24,7 @@ services:
       db-stats:
         condition: service_healthy
     environment:
-      SPRING_PROFILES_ACTIVE: docker  # usa application-docker.yml
+      SPRING_PROFILES_ACTIVE: docker
     ports:
       - "9090:9090"
     healthcheck:
@@ -34,18 +34,47 @@ services:
       retries: 10
       start_period: 20s
 
-  # main-service:
-  #   build:
-  #     context: .
-  #     dockerfile: statistics/ewm-main-service/Dockerfile
-  #   depends_on:
-  #     stats-server:
-  #       condition: service_healthy
-  #   environment:
-  #     SERVER_PORT: 8080
-  #     STATS_BASE_URL: http://stats-server:9090
-  #   ports:
-  #     - "8080:8080"
+  db-main:
+    image: postgres:16
+    container_name: db-main
+    environment:
+      POSTGRES_DB: ewm_main
+      POSTGRES_USER: ewm
+      POSTGRES_PASSWORD: ewm
+    ports:
+      - "5544:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "ewm", "-d", "ewm_main"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - db-main-data:/var/lib/postgresql/data
+
+  ewm-service:
+    build:
+      context: .
+      dockerfile: statistics/ewm-main-service/Dockerfile
+    depends_on:
+      db-main:
+        condition: service_healthy
+      stats-server:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      STATS_BASE_URL: http://stats-server:9090
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db-main:5432/ewm_main
+      SPRING_DATASOURCE_USERNAME: ewm
+      SPRING_DATASOURCE_PASSWORD: ewm
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/api/health | grep -q 'OK'"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
 
 volumes:
   db-stats-data:
+  db-main-data:

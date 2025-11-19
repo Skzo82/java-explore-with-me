@@ -1,0 +1,47 @@
+server:
+  port: 0  # # случайный порт для тестов
+
+spring:
+  application:
+    name: ewm-main-service-test
+
+  datasource:
+    url: jdbc:h2:mem:ewm_main_test;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    username: sa
+    password: sa
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: false
+        show_sql: false
+    open-in-view: false
+
+  flyway:
+    enabled: false  # # для H2 создаём схему автоматически Hibernate’ом
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    date-format: "yyyy-MM-dd HH:mm:ss"
+    time-zone: "UTC"
+
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
+
+logging:
+  level:
+    root: WARN
+    org.springframework: INFO
+    ru.practicum: DEBUG
+
+app:
+  stats:
+    base-url: http://localhost:9090  # # не используется в тестах

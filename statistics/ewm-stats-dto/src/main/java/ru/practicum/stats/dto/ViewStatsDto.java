@@ -1,5 +1,9 @@
 package ru.practicum.stats.dto;
 
-// DTO ответа — соответствует схеме "ViewStats"
-public record ViewStatsDto(String app, String uri, long hits) {
+/* # DTO для агрегированной статистики просмотров */
+public record ViewStatsDto(
+        String app,   // название сервиса
+        String uri,   // URI ресурса
+        long hits     // количество просмотров
+) {
 }

@@ -1,0 +1,4 @@
+UPDATE events SET state = 'PENDING' WHERE state IS NULL;
+
+ALTER TABLE events
+    ALTER COLUMN state SET DEFAULT 'PENDING';

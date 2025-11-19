@@ -1,87 +1,110 @@
 package ru.practicum.stats.client;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import ru.practicum.stats.dto.EndpointHitDto;
 import ru.practicum.stats.dto.ViewStatsDto;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class StatsClientRest implements StatsClient {
 
-    private final RestTemplate rt;
+    private final RestTemplate restTemplate;
 
-    @Value("${stats.base-url:http://localhost:9090}")
+    /* # Формат дат, который ждёт stats-service */
+    private static final DateTimeFormatter FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    /* # Базовый URL stats-сервиса (совпадает с docker-compose) */
+    @Value("${stats-server.url:http://stats-server:9090}")
     private String baseUrl;
-
-    private static final DateTimeFormatter F =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-                    .withZone(ZoneId.systemDefault());
-
-    public StatsClientRest(RestTemplateBuilder rtb) {
-        this.rt = rtb
-                .setConnectTimeout(Duration.ofSeconds(3))
-                .setReadTimeout(Duration.ofSeconds(10))
-                .build();
-    }
 
     @Override
     public void saveHit(HttpServletRequest request, String app) {
-        String uri = request.getRequestURI();
-        String ip = clientIp(request);
-        String ts = F.format(Instant.now());
+        // # Текущее время форматируем в строку нужного формата
+        String ts = FORMATTER.format(LocalDateTime.now());
 
-        EndpointHitDto dto = new EndpointHitDto(
-                null,          // id
-                app,           // app
-                uri,           // uri
-                ip,            // ip
-                ts             // timestamp "yyyy-MM-dd HH:mm:ss"
+        EndpointHitDto hit = new EndpointHitDto(
+                null,                      // id — сгенерирует stats-server
+                app,                       // название приложения
+                request.getRequestURI(),   // URI запроса
+                request.getRemoteAddr(),   // IP клиента
+                ts                         // строковое представление времени
         );
 
-        rt.postForLocation(baseUrl + "/hit", dto);
+        try {
+            restTemplate.postForEntity(baseUrl + "/hit", hit, Void.class);
+        } catch (RestClientException ex) {
+            // # Ошибка статистики не должна ломать основной сервис
+            log.warn("Failed to send hit to stats service: {}", ex.getMessage());
+        }
     }
 
     @Override
     public List<ViewStatsDto> getStats(Instant start, Instant end, List<String> uris, boolean unique) {
-        String qs = "start=" + enc(F.format(start)) +
-                "&end=" + enc(F.format(end)) +
-                "&unique=" + unique;
-
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("start", toString(start));
+        params.add("end", toString(end));
         if (uris != null && !uris.isEmpty()) {
-            // ВАЖНО: список через запятую, затем целиком URL-encode
-            String joined = String.join(",", uris);
-            qs += "&uris=" + enc(joined);
+            for (String uri : uris) {
+                params.add("uris", uri);
+            }
         }
+        params.add("unique", String.valueOf(unique));
 
-        ResponseEntity<ViewStatsDto[]> resp =
-                rt.getForEntity(baseUrl + "/stats?" + qs, ViewStatsDto[].class);
+        String url = baseUrl + "/stats" + buildQuery(params);
 
-        ViewStatsDto[] body = resp.getBody();
-        return Arrays.asList(body == null ? new ViewStatsDto[0] : body);
+        try {
+            ResponseEntity<ViewStatsDto[]> response =
+                    restTemplate.getForEntity(url, ViewStatsDto[].class);
+
+            ViewStatsDto[] body = response.getBody();
+            if (body == null || body.length == 0) {
+                return Collections.emptyList();
+            }
+            return List.of(body);
+        } catch (RestClientException ex) {
+            // # Если stats-service упал → просто логируем и возвращаем пустой список
+            log.warn("Failed to get stats from stats service: {}", ex.getMessage());
+            return Collections.emptyList();
+        }
     }
 
-    private static String clientIp(HttpServletRequest req) {
-        String xff = req.getHeader("X-Forwarded-For");
-        if (xff != null && !xff.isBlank()) {
-            return xff.split(",")[0].trim();
-        }
-        return req.getRemoteAddr();
+    /* # Преобразование Instant → строка нужного формата */
+    private String toString(Instant instant) {
+        LocalDateTime ldt = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+        return FORMATTER.format(ldt);
     }
 
-    private static String enc(String s) {
-        return URLEncoder.encode(s, StandardCharsets.UTF_8);
+    /* # Примитивный билдер query-строки */
+    private String buildQuery(MultiValueMap<String, String> params) {
+        StringBuilder sb = new StringBuilder("?");
+        boolean first = true;
+        for (var entry : params.entrySet()) {
+            for (String value : entry.getValue()) {
+                if (!first) {
+                    sb.append('&');
+                }
+                first = false;
+                sb.append(entry.getKey()).append('=').append(value);
+            }
+        }
+        return sb.toString();
     }
 }
