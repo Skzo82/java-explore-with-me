@@ -40,9 +40,6 @@ public class PublicEventsController {
             @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
             @RequestParam(defaultValue = "10") @Positive Integer size
     ) {
-        if (size == null || size <= 0) {
-            size = 10; // # защита от некорректных значений
-        }
         int page = from / size;
         Pageable pageable = PageRequest.of(page, size);
 
