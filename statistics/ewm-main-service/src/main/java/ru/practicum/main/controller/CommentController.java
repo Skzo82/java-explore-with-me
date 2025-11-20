@@ -9,6 +9,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.main.dto.comment.CommentDto;
 import ru.practicum.main.dto.comment.NewCommentDto;
+import ru.practicum.main.dto.comment.UpdateCommentDto;
 import ru.practicum.main.service.CommentService;
 
 import java.util.List;
@@ -21,37 +22,35 @@ public class CommentController {
 
     private final CommentService commentService;
 
-    /* # Создание комментария к событию пользователем */
-    @PostMapping("/users/{userId}/events/{eventId}/comments")
+    /* # Создание комментария к событию пользователем
+       eventId передаётся в теле запроса */
+    @PostMapping("/users/{userId}/comments")
     @ResponseStatus(HttpStatus.CREATED)
     public CommentDto createComment(
             @PathVariable Long userId,
-            @PathVariable Long eventId,
             @Valid @RequestBody NewCommentDto newCommentDto
     ) {
-        return commentService.createComment(userId, eventId, newCommentDto);
+        return commentService.createComment(userId, newCommentDto);
     }
 
-    /* # Обновление собственного комментария пользователя */
-    @PatchMapping("/users/{userId}/events/{eventId}/comments/{commentId}")
+    /* # Обновление собственного комментария пользователя
+       commentId и новый текст передаём в теле */
+    @PatchMapping("/users/{userId}/comments")
     public CommentDto updateComment(
             @PathVariable Long userId,
-            @PathVariable Long eventId,
-            @PathVariable Long commentId,
-            @Valid @RequestBody NewCommentDto updateDto
+            @Valid @RequestBody UpdateCommentDto updateDto
     ) {
-        return commentService.updateComment(userId, eventId, commentId, updateDto);
+        return commentService.updateComment(userId, updateDto);
     }
 
     /* # Удаление собственного комментария пользователя */
-    @DeleteMapping("/users/{userId}/events/{eventId}/comments/{commentId}")
+    @DeleteMapping("/users/{userId}/comments/{commentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteComment(
             @PathVariable Long userId,
-            @PathVariable Long eventId,
             @PathVariable Long commentId
     ) {
-        commentService.deleteComment(userId, eventId, commentId);
+        commentService.deleteComment(userId, commentId);
     }
 
     /* # Публичное получение комментария по id */
@@ -60,10 +59,11 @@ public class CommentController {
         return commentService.getCommentById(commentId);
     }
 
-    /* # Публичное получение списка комментариев к событию */
-    @GetMapping("/events/{eventId}/comments")
+    /* # Публичное получение списка комментариев к событию
+       eventId передаётся как RequestParam */
+    @GetMapping("/comments")
     public List<CommentDto> getCommentsByEvent(
-            @PathVariable Long eventId,
+            @RequestParam Long eventId,
             @RequestParam(defaultValue = "0") @PositiveOrZero int from,
             @RequestParam(defaultValue = "10") @Positive int size
     ) {

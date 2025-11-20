@@ -2,17 +2,18 @@ package ru.practicum.main.service;
 
 import ru.practicum.main.dto.comment.CommentDto;
 import ru.practicum.main.dto.comment.NewCommentDto;
+import ru.practicum.main.dto.comment.UpdateCommentDto;
 
 import java.util.List;
 
 /* # Сервис для управления комментариями */
 public interface CommentService {
 
-    CommentDto createComment(Long userId, Long eventId, NewCommentDto newCommentDto);
+    CommentDto createComment(Long userId, NewCommentDto newCommentDto);
 
-    CommentDto updateComment(Long userId, Long eventId, Long commentId, NewCommentDto updateDto);
+    CommentDto updateComment(Long userId, UpdateCommentDto updateDto);
 
-    void deleteComment(Long userId, Long eventId, Long commentId);
+    void deleteComment(Long userId, Long commentId);
 
     CommentDto getCommentById(Long commentId);
 
@@ -21,4 +22,7 @@ public interface CommentService {
 
     /* # Пагинированный список комментариев (публичный эндпоинт) */
     List<CommentDto> getCommentsByEvent(Long eventId, int from, int size);
+
+    /* # Количество комментариев к событию (для публичных эндпоинтов событий) */
+    long getCommentsCountForEvent(Long eventId);
 }

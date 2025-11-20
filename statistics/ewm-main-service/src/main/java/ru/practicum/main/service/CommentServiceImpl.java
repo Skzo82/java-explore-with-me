@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.main.dto.comment.CommentDto;
 import ru.practicum.main.dto.comment.NewCommentDto;
+import ru.practicum.main.dto.comment.UpdateCommentDto;
 import ru.practicum.main.exception.ConflictException;
 import ru.practicum.main.exception.NotFoundException;
 import ru.practicum.main.mapper.CommentMapper;
@@ -35,10 +36,10 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public CommentDto createComment(Long userId, Long eventId, NewCommentDto newCommentDto) {
+    public CommentDto createComment(Long userId, NewCommentDto newCommentDto) {
         // # Проверяем пользователя и опубликованное событие
         User author = getUser(userId);
-        Event event = getPublishedEvent(eventId);
+        Event event = getPublishedEvent(newCommentDto.getEventId());
 
         Comment comment = CommentMapper.toComment(newCommentDto, author, event);
         Comment saved = commentRepository.save(comment);
@@ -47,15 +48,11 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public CommentDto updateComment(Long userId,
-                                    Long eventId,
-                                    Long commentId,
-                                    NewCommentDto updateDto) {
-        Comment comment = getComment(commentId);
+    public CommentDto updateComment(Long userId, UpdateCommentDto updateDto) {
+        Comment comment = getComment(updateDto.getCommentId());
 
-        // # Пользователь может редактировать только свой комментарий к этому событию
-        if (!comment.getAuthor().getId().equals(userId)
-                || !comment.getEvent().getId().equals(eventId)) {
+        // # Пользователь может редактировать только свой комментарий
+        if (!comment.getAuthor().getId().equals(userId)) {
             throw new ConflictException("Пользователь не может изменить этот комментарий");
         }
 
@@ -68,12 +65,11 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public void deleteComment(Long userId, Long eventId, Long commentId) {
+    public void deleteComment(Long userId, Long commentId) {
         Comment comment = getComment(commentId);
 
-        // # Пользователь может удалить только свой комментарий к этому событию
-        if (!comment.getAuthor().getId().equals(userId)
-                || !comment.getEvent().getId().equals(eventId)) {
+        // # Пользователь может удалить только свой комментарий
+        if (!comment.getAuthor().getId().equals(userId)) {
             throw new ConflictException("Пользователь не может удалить этот комментарий");
         }
 
@@ -103,7 +99,6 @@ public class CommentServiceImpl implements CommentService {
         // # Убеждаемся, что событие существует и опубликовано
         getPublishedEvent(eventId);
 
-        // # from/size -> номер страницы
         int page = from / size;
         Pageable pageable = PageRequest.of(page, size);
 
@@ -113,6 +108,12 @@ public class CommentServiceImpl implements CommentService {
         return pageResult
                 .map(CommentMapper::toCommentDto)
                 .toList();
+    }
+
+    /* # Количество комментариев к событию (для публичных эндпоинтов событий) */
+    @Override
+    public long getCommentsCountForEvent(Long eventId) {
+        return commentRepository.countByEventId(eventId);
     }
 
     /* ===== Вспомогательные методы ===== */

@@ -273,18 +273,16 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"text\": \"Тестовый комментарий\"\n}"
+              "raw": "{\n  \"eventId\": {{cEventId}},\n  \"text\": \"Тестовый комментарий\"\n}"
             },
             "url": {
-              "raw": "{{cBaseUrl}}/users/{{cUserId}}/events/{{cEventId}}/comments",
+              "raw": "{{cBaseUrl}}/users/{{cUserId}}/comments",
               "host": [
                 "{{cBaseUrl}}"
               ],
               "path": [
                 "users",
                 "{{cUserId}}",
-                "events",
-                "{{cEventId}}",
                 "comments"
               ]
             },
@@ -322,20 +320,17 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"text\": \"Обновлённый комментарий\"\n}"
+              "raw": "{\n  \"commentId\": {{cCommentId}},\n  \"text\": \"Обновлённый комментарий\"\n}"
             },
             "url": {
-              "raw": "{{cBaseUrl}}/users/{{cUserId}}/events/{{cEventId}}/comments/{{cCommentId}}",
+              "raw": "{{cBaseUrl}}/users/{{cUserId}}/comments",
               "host": [
                 "{{cBaseUrl}}"
               ],
               "path": [
                 "users",
                 "{{cUserId}}",
-                "events",
-                "{{cEventId}}",
-                "comments",
-                "{{cCommentId}}"
+                "comments"
               ]
             },
             "description": "Обновляет текст существующего комментария."
@@ -405,14 +400,18 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{cBaseUrl}}/events/{{cEventId}}/comments",
+              "raw": "{{cBaseUrl}}/comments?eventId={{cEventId}}",
               "host": [
                 "{{cBaseUrl}}"
               ],
               "path": [
-                "events",
-                "{{cEventId}}",
                 "comments"
+              ],
+              "query": [
+                {
+                  "key": "eventId",
+                  "value": "{{cEventId}}"
+                }
               ]
             },
             "description": "Получение списка комментариев к событию."
@@ -445,15 +444,13 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{cBaseUrl}}/users/{{cUserId}}/events/{{cEventId}}/comments/{{cCommentId}}",
+              "raw": "{{cBaseUrl}}/users/{{cUserId}}/comments/{{cCommentId}}",
               "host": [
                 "{{cBaseUrl}}"
               ],
               "path": [
                 "users",
                 "{{cUserId}}",
-                "events",
-                "{{cEventId}}",
                 "comments",
                 "{{cCommentId}}"
               ]

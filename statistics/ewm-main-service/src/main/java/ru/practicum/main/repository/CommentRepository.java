@@ -15,4 +15,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
     /* # Пагинированный список комментариев по возрастанию даты */
     Page<Comment> findAllByEventIdOrderByCreatedAsc(Long eventId, Pageable pageable);
+
+    /* # Количество комментариев для события */
+    long countByEventId(Long eventId);
 }

@@ -70,6 +70,7 @@ public class EventMapper {
                 .views(views)
                 .category(categoryDto)
                 .initiator(initiatorDto)
+                .commentsCount(0L)
                 .build();
     }
 
@@ -126,6 +127,7 @@ public class EventMapper {
                 .confirmedRequests(confirmed)
                 .views(views)
                 .location(loc)
+                .commentsCount(0L)
                 .build();
     }
 }

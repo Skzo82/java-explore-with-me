@@ -20,9 +20,10 @@ import ru.practicum.main.model.User;
 import ru.practicum.main.repository.CategoryRepository;
 import ru.practicum.main.repository.EventRepository;
 import ru.practicum.main.repository.UserRepository;
+import ru.practicum.main.dto.event.UserStateAction;
+import ru.practicum.main.service.CommentService;
 import ru.practicum.stats.client.StatsClient;
 import ru.practicum.stats.dto.ViewStatsDto;
-import ru.practicum.main.dto.event.UserStateAction;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -40,7 +41,8 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepo;
     private final UserRepository userRepo;
     private final CategoryRepository categoryRepo;
-    private final StatsClient statsClient; // # клиент к stats-service
+    private final StatsClient statsClient;      // # клиент к stats-service
+    private final CommentService commentService; // # сервис комментариев
 
     // ----- Private (owner) -----
 
@@ -193,9 +195,17 @@ public class EventServiceImpl implements EventService {
             log.warn("Failed to enrich events with views from stats-service", ex);
         }
 
-        return events.stream()
+        /* # Маппим в DTO и добавляем количество комментариев */
+        List<EventShortDto> dtos = events.stream()
                 .map(EventMapper::toShort)
                 .toList();
+
+        dtos.forEach(dto -> {
+            long commentsCount = commentService.getCommentsCountForEvent(dto.getId());
+            dto.setCommentsCount(commentsCount);
+        });
+
+        return dtos;
     }
 
     @Override
@@ -226,7 +236,13 @@ public class EventServiceImpl implements EventService {
         long views = stats.isEmpty() ? 0L : stats.get(0).hits();
         e.setViews((int) views);
 
-        return EventMapper.toFull(e);
+        EventFullDto dto = EventMapper.toFull(e);
+
+        // # Добавляем количество комментариев для события
+        long commentsCount = commentService.getCommentsCountForEvent(eventId);
+        dto.setCommentsCount(commentsCount);
+
+        return dto;
     }
 
     // ----- Admin -----

@@ -28,4 +28,7 @@ public class EventShortDto {
 
     private CategoryDto category;         // категория
     private UserShortDto initiator;       // инициатор
+
+    /* # Количество комментариев к событию */
+    private Long commentsCount;
 }
