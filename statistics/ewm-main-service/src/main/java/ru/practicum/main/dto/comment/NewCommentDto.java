@@ -13,11 +13,12 @@ import lombok.*;
 @Builder
 public class NewCommentDto {
 
-    /* # Идентификатор события, к которому относится комментарий */
-    @NotNull(message = "eventId обязателен")
+    /* # Идентификатор события, к которому оставляют комментарий */
+    @NotNull
     private Long eventId;
 
+    /* # Текст комментария */
     @NotBlank(message = "Текст комментария не может быть пустым")
     @Size(max = 1000, message = "Максимальная длина комментария — 1000 символов")
-    private String text;             // текст комментария
+    private String text;
 }

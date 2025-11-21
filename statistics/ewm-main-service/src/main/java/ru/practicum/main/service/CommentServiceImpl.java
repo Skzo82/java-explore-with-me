@@ -21,7 +21,9 @@ import ru.practicum.main.repository.EventRepository;
 import ru.practicum.main.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /* # Реализация сервиса комментариев */
@@ -39,7 +41,8 @@ public class CommentServiceImpl implements CommentService {
     public CommentDto createComment(Long userId, NewCommentDto newCommentDto) {
         // # Проверяем пользователя и опубликованное событие
         User author = getUser(userId);
-        Event event = getPublishedEvent(newCommentDto.getEventId());
+        Long eventId = newCommentDto.getEventId();
+        Event event = getPublishedEvent(eventId);
 
         Comment comment = CommentMapper.toComment(newCommentDto, author, event);
         Comment saved = commentRepository.save(comment);
@@ -99,6 +102,7 @@ public class CommentServiceImpl implements CommentService {
         // # Убеждаемся, что событие существует и опубликовано
         getPublishedEvent(eventId);
 
+        // # from/size -> номер страницы
         int page = from / size;
         Pageable pageable = PageRequest.of(page, size);
 
@@ -110,10 +114,22 @@ public class CommentServiceImpl implements CommentService {
                 .toList();
     }
 
-    /* # Количество комментариев к событию (для публичных эндпоинтов событий) */
     @Override
     public long getCommentsCountForEvent(Long eventId) {
         return commentRepository.countByEventId(eventId);
+    }
+
+    @Override
+    public Map<Long, Long> getCommentsCountForEvents(List<Long> eventIds) {
+        if (eventIds == null || eventIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return commentRepository.countByEventIdIn(eventIds).stream()
+                .collect(Collectors.toMap(
+                        CommentRepository.EventCommentsCount::getEventId,
+                        CommentRepository.EventCommentsCount::getCount
+                ));
     }
 
     /* ===== Вспомогательные методы ===== */

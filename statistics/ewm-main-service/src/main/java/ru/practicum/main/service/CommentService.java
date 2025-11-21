@@ -5,6 +5,7 @@ import ru.practicum.main.dto.comment.NewCommentDto;
 import ru.practicum.main.dto.comment.UpdateCommentDto;
 
 import java.util.List;
+import java.util.Map;
 
 /* # Сервис для управления комментариями */
 public interface CommentService {
@@ -23,6 +24,9 @@ public interface CommentService {
     /* # Пагинированный список комментариев (публичный эндпоинт) */
     List<CommentDto> getCommentsByEvent(Long eventId, int from, int size);
 
-    /* # Количество комментариев к событию (для публичных эндпоинтов событий) */
+    /* # Количество комментариев к одному событию (для детального просмотра) */
     long getCommentsCountForEvent(Long eventId);
+
+    /* # Количество комментариев для набора событий (bulk-вариант, чтобы избежать N+1) */
+    Map<Long, Long> getCommentsCountForEvents(List<Long> eventIds);
 }

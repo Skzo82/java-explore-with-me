@@ -22,8 +22,7 @@ public class CommentController {
 
     private final CommentService commentService;
 
-    /* # Создание комментария к событию пользователем
-       eventId передаётся в теле запроса */
+    /* # Создание комментария пользователем */
     @PostMapping("/users/{userId}/comments")
     @ResponseStatus(HttpStatus.CREATED)
     public CommentDto createComment(
@@ -33,8 +32,7 @@ public class CommentController {
         return commentService.createComment(userId, newCommentDto);
     }
 
-    /* # Обновление собственного комментария пользователя
-       commentId и новый текст передаём в теле */
+    /* # Обновление собственного комментария пользователя */
     @PatchMapping("/users/{userId}/comments")
     public CommentDto updateComment(
             @PathVariable Long userId,
@@ -59,8 +57,7 @@ public class CommentController {
         return commentService.getCommentById(commentId);
     }
 
-    /* # Публичное получение списка комментариев к событию
-       eventId передаётся как RequestParam */
+    /* # Публичное получение списка комментариев к событию */
     @GetMapping("/comments")
     public List<CommentDto> getCommentsByEvent(
             @RequestParam Long eventId,
