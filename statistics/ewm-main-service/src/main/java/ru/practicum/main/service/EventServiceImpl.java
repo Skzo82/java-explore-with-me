@@ -22,7 +22,6 @@ import ru.practicum.main.repository.EventRepository;
 import ru.practicum.main.repository.UserRepository;
 import ru.practicum.stats.client.StatsClient;
 import ru.practicum.stats.dto.ViewStatsDto;
-import ru.practicum.main.dto.event.UserStateAction;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -40,7 +39,8 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepo;
     private final UserRepository userRepo;
     private final CategoryRepository categoryRepo;
-    private final StatsClient statsClient; // # клиент к stats-service
+    private final StatsClient statsClient;      // # клиент к stats-service
+    private final CommentService commentService; // # сервис комментариев для счётчиков
 
     // ----- Private (owner) -----
 
@@ -193,9 +193,26 @@ public class EventServiceImpl implements EventService {
             log.warn("Failed to enrich events with views from stats-service", ex);
         }
 
-        return events.stream()
+        // # Маппим в DTO
+        List<EventShortDto> dtos = events.stream()
                 .map(EventMapper::toShort)
                 .toList();
+
+        // # ==== НОВОЕ: подгружаем количество комментариев bulk-запросом, без N+1 ====
+        List<Long> eventIds = dtos.stream()
+                .map(EventShortDto::getId)
+                .filter(Objects::nonNull)
+                .toList();
+
+        Map<Long, Long> countsByEventId = commentService.getCommentsCountForEvents(eventIds);
+
+        dtos.forEach(dto -> {
+            Long count = countsByEventId.getOrDefault(dto.getId(), 0L);
+            dto.setCommentsCount(count);
+        });
+        // # ========================================================================
+
+        return dtos;
     }
 
     @Override
@@ -226,7 +243,13 @@ public class EventServiceImpl implements EventService {
         long views = stats.isEmpty() ? 0L : stats.get(0).hits();
         e.setViews((int) views);
 
-        return EventMapper.toFull(e);
+        EventFullDto dto = EventMapper.toFull(e);
+
+        // # Для одного события отдельный запрос не создаёт N+1, можно оставить так
+        long commentsCount = commentService.getCommentsCountForEvent(eventId);
+        dto.setCommentsCount(commentsCount);
+
+        return dto;
     }
 
     // ----- Admin -----
@@ -330,9 +353,11 @@ public class EventServiceImpl implements EventService {
         if (dto.getTitle() != null) {
             e.setTitle(dto.getTitle());
         }
+
         if (dto.getCategory() != null) {
             Category cat = categoryRepo.findById(dto.getCategory())
-                    .orElseThrow(() -> new NotFoundException("Category not found: " + dto.getCategory()));
+                    .orElseThrow(() ->
+                            new NotFoundException("Category not found: " + dto.getCategory()));
             e.setCategory(cat);
         }
 

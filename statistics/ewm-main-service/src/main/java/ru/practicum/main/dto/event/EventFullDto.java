@@ -41,4 +41,7 @@ public class EventFullDto {
     private String state;                 // PENDING / PUBLISHED / CANCELED
 
     private LocationDto location;         // координаты
+
+    /* # Количество комментариев к событию */
+    private Long commentsCount;
 }
